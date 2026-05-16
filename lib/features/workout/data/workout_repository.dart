@@ -50,6 +50,53 @@ class WorkoutRepository {
     return query.getSingleOrNull();
   }
 
+  Future<WorkoutSessionRow> startSessionFromRoutine(String routineId) {
+    return _db.transaction(() async {
+      final day = await (_db.select(_db.routineDays)
+            ..where((t) =>
+                t.routineId.equals(routineId) & t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.orderInRoutine)])
+            ..limit(1))
+          .getSingleOrNull();
+
+      final now = _clock();
+      final sessionId = _idGenerator();
+      await _db.into(_db.workoutSessions).insert(
+            WorkoutSessionsCompanion.insert(
+              id: sessionId,
+              startedAt: now,
+              createdAt: now,
+              updatedAt: now,
+              routineDayId: Value(day?.id),
+            ),
+          );
+
+      if (day != null) {
+        final routineExercises = await (_db.select(_db.routineExercises)
+              ..where((t) =>
+                  t.routineDayId.equals(day.id) & t.deletedAt.isNull())
+              ..orderBy([(t) => OrderingTerm.asc(t.orderInDay)]))
+            .get();
+        for (var i = 0; i < routineExercises.length; i++) {
+          await _db.into(_db.loggedExercises).insert(
+                LoggedExercisesCompanion.insert(
+                  id: _idGenerator(),
+                  sessionId: sessionId,
+                  exerciseId: routineExercises[i].exerciseId,
+                  orderInSession: i,
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+              );
+        }
+      }
+
+      return (_db.select(_db.workoutSessions)
+            ..where((t) => t.id.equals(sessionId)))
+          .getSingle();
+    });
+  }
+
   Future<WorkoutSessionRow> repeatSession(String sourceSessionId) {
     return _db.transaction(() async {
       final source = await (_db.select(_db.loggedExercises)

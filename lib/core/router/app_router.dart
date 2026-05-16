@@ -5,6 +5,8 @@ import '../../features/history/exercise_history_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/history/session_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/routines/routine_edit_screen.dart';
+import '../../features/routines/routines_screen.dart';
 import '../../features/workout/workout_screen.dart';
 import '../../shared/main_layout.dart';
 
@@ -52,6 +54,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.workout,
                 builder: (context, state) => const WorkoutScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'routines',
+                    builder: (context, state) => const RoutinesScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'new',
+                        builder: (context, state) =>
+                            const RoutineEditScreen(),
+                      ),
+                      GoRoute(
+                        path: ':id/edit',
+                        builder: (context, state) => RoutineEditScreen(
+                          routineId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

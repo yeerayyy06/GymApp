@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/utils/formatters.dart';
+import '../routines/data/routine_models.dart';
+import '../routines/providers/routine_providers.dart';
 import 'providers/rest_timer_provider.dart';
 import 'providers/workout_providers.dart';
 import 'widgets/elapsed_timer.dart';
@@ -108,15 +111,17 @@ class _StartSessionView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 110,
-              height: 110,
+    final routinesAsync = ref.watch(routinesProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -130,43 +135,185 @@ class _StartSessionView extends ConsumerWidget {
               ),
               child: Icon(
                 Icons.fitness_center_rounded,
-                size: 56,
+                size: 40,
                 color: scheme.primary,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: Text(
               'Listo para entrenar',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
                   ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Inicia una sesión para empezar a registrar ejercicios y series.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-            ),
-            const SizedBox(height: 28),
-            FilledButton.icon(
-              onPressed: () =>
-                  ref.read(workoutRepositoryProvider).startSession(),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Iniciar entrenamiento'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Text(
+                'Mis rutinas',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => context.push('/workout/routines'),
+                icon: const Icon(Icons.tune_rounded, size: 16),
+                label: const Text('Gestionar'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          routinesAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ],
+            error: (e, _) => Text('Error: $e'),
+            data: (routines) {
+              if (routines.isEmpty) {
+                return _NoRoutinesCard(
+                  onCreate: () => context.push('/workout/routines/new'),
+                );
+              }
+              return Column(
+                children: [
+                  for (final r in routines)
+                    _RoutineQuickStart(routine: r),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            onPressed: () =>
+                ref.read(workoutRepositoryProvider).startSession(),
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text('Empezar sesión vacía'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoRoutinesCard extends StatelessWidget {
+  const _NoRoutinesCard({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.4),
         ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.checklist_rounded,
+            size: 32,
+            color: scheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Aún no tienes rutinas',
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Crea una para empezar sesiones más rápido',
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonalIcon(
+            onPressed: onCreate,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Crear rutina'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutineQuickStart extends ConsumerWidget {
+  const _RoutineQuickStart({required this.routine});
+
+  final RoutineWithExercises routine;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  routine.routine.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${routine.exerciseCount} ejercicios · ${routine.totalTargetSets} series',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: () async {
+              await ref
+                  .read(workoutRepositoryProvider)
+                  .startSessionFromRoutine(routine.routine.id);
+            },
+            icon: const Icon(Icons.play_arrow_rounded, size: 18),
+            label: const Text('Empezar'),
+          ),
+        ],
       ),
     );
   }
