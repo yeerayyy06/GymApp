@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
+import '../workout/providers/workout_providers.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
 import 'widgets/pr_badge.dart';
@@ -43,6 +44,10 @@ class SessionDetailScreen extends ConsumerWidget {
           );
         },
       ),
+      bottomNavigationBar: _RepeatBar(
+        sessionId: sessionId,
+        detail: detailAsync.valueOrNull,
+      ),
     );
   }
 
@@ -71,6 +76,68 @@ class SessionDetailScreen extends ConsumerWidget {
     await ref.read(historyRepositoryProvider).deleteSession(sessionId);
     if (!context.mounted) return;
     context.pop();
+  }
+}
+
+class _RepeatBar extends ConsumerWidget {
+  const _RepeatBar({required this.sessionId, required this.detail});
+
+  final String sessionId;
+  final SessionDetail? detail;
+
+  Future<void> _onRepeat(BuildContext context, WidgetRef ref) async {
+    final repo = ref.read(workoutRepositoryProvider);
+    final active = await repo.getActiveSession();
+    if (!context.mounted) return;
+    if (active != null) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Hay una sesión en curso'),
+          content: const Text(
+            'Para repetir este entrenamiento se descartará la sesión activa.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Descartar y repetir'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      if (!context.mounted) return;
+      await repo.cancelSession(active.id);
+    }
+    if (!context.mounted) return;
+    await repo.repeatSession(sessionId);
+    if (!context.mounted) return;
+    context.go('/workout');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (detail == null || detail!.exercises.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => _onRepeat(context, ref),
+            icon: const Icon(Icons.replay),
+            label: const Text('Repetir entrenamiento'),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -178,6 +245,12 @@ class _ExerciseSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final setRows = <Widget>[];
+    var workingCounter = 0;
+    for (final set in detail.sets) {
+      final label = set.isWarmup ? null : (++workingCounter).toString();
+      setRows.add(_SetRow(label: label, set: set, prs: prs));
+    }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Column(
@@ -218,12 +291,7 @@ class _ExerciseSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text('Sin series registradas'),
             ),
-          for (var i = 0; i < detail.sets.length; i++)
-            _SetRow(
-              index: i + 1,
-              set: detail.sets[i],
-              prs: prs,
-            ),
+          ...setRows,
           const SizedBox(height: 8),
         ],
       ),
@@ -233,17 +301,18 @@ class _ExerciseSection extends StatelessWidget {
 
 class _SetRow extends StatelessWidget {
   const _SetRow({
-    required this.index,
+    required this.label,
     required this.set,
     required this.prs,
   });
 
-  final int index;
+  final String? label;
   final LoggedSetRow set;
   final ExercisePRs? prs;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final est1RM = estimatedOneRepMax(weightKg: set.weightKg, reps: set.reps);
     final isWeightPR = !set.isWarmup &&
         prs != null &&
@@ -251,7 +320,6 @@ class _SetRow extends StatelessWidget {
     final is1RMPR = !set.isWarmup &&
         prs != null &&
         est1RM >= prs!.bestEst1RMKg - 0.001;
-    final showPR = isWeightPR || is1RMPR;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -260,17 +328,19 @@ class _SetRow extends StatelessWidget {
           SizedBox(
             width: 32,
             child: Center(
-              child: set.isWarmup
+              child: label == null
                   ? Text(
                       'W',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: scheme.tertiary,
+                              ),
                     )
                   : CircleAvatar(
                       radius: 12,
                       child: Text(
-                        '$index',
+                        label!,
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ),
@@ -284,18 +354,16 @@ class _SetRow extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          if (showPR) ...[
-            if (is1RMPR)
-              const Padding(
-                padding: EdgeInsets.only(right: 4),
-                child: PRBadge(label: '1RM'),
-              ),
-            if (isWeightPR && !is1RMPR)
-              const Padding(
-                padding: EdgeInsets.only(right: 4),
-                child: PRBadge(label: 'PESO'),
-              ),
-          ],
+          if (is1RMPR)
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: PRBadge(label: '1RM'),
+            )
+          else if (isWeightPR)
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: PRBadge(label: 'PESO'),
+            ),
         ],
       ),
     );

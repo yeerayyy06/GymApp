@@ -6,11 +6,13 @@ class SetFormResult {
     required this.weightKg,
     required this.reps,
     this.rpe,
+    this.isWarmup = false,
   });
 
   final double weightKg;
   final int reps;
   final double? rpe;
+  final bool isWarmup;
 }
 
 class SetFormDialog extends StatefulWidget {
@@ -21,6 +23,7 @@ class SetFormDialog extends StatefulWidget {
     this.initialWeightKg,
     this.initialReps,
     this.initialRpe,
+    this.initialIsWarmup = false,
   });
 
   final String exerciseName;
@@ -28,6 +31,7 @@ class SetFormDialog extends StatefulWidget {
   final double? initialWeightKg;
   final int? initialReps;
   final double? initialRpe;
+  final bool initialIsWarmup;
 
   static Future<SetFormResult?> show(
     BuildContext context, {
@@ -36,6 +40,7 @@ class SetFormDialog extends StatefulWidget {
     double? initialWeightKg,
     int? initialReps,
     double? initialRpe,
+    bool initialIsWarmup = false,
   }) {
     return showDialog<SetFormResult>(
       context: context,
@@ -45,6 +50,7 @@ class SetFormDialog extends StatefulWidget {
         initialWeightKg: initialWeightKg,
         initialReps: initialReps,
         initialRpe: initialRpe,
+        initialIsWarmup: initialIsWarmup,
       ),
     );
   }
@@ -58,6 +64,7 @@ class _SetFormDialogState extends State<SetFormDialog> {
   late final TextEditingController _weightController;
   late final TextEditingController _repsController;
   late final TextEditingController _rpeController;
+  late bool _isWarmup;
 
   @override
   void initState() {
@@ -71,6 +78,7 @@ class _SetFormDialogState extends State<SetFormDialog> {
     _rpeController = TextEditingController(
       text: widget.initialRpe?.toString() ?? '',
     );
+    _isWarmup = widget.initialIsWarmup;
   }
 
   @override
@@ -90,14 +98,23 @@ class _SetFormDialogState extends State<SetFormDialog> {
     final rpe =
         rpeText.isEmpty ? null : double.parse(rpeText.replaceAll(',', '.'));
     Navigator.of(context).pop(
-      SetFormResult(weightKg: weight, reps: reps, rpe: rpe),
+      SetFormResult(
+        weightKg: weight,
+        reps: reps,
+        rpe: rpe,
+        isWarmup: _isWarmup,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Serie ${widget.setNumber} · ${widget.exerciseName}'),
+      title: Text(
+        _isWarmup
+            ? 'Calentamiento · ${widget.exerciseName}'
+            : 'Serie ${widget.setNumber} · ${widget.exerciseName}',
+      ),
       content: Form(
         key: _formKey,
         child: Column(
@@ -167,6 +184,15 @@ class _SetFormDialogState extends State<SetFormDialog> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              value: _isWarmup,
+              onChanged: (value) => setState(() => _isWarmup = value),
+              title: const Text('Calentamiento'),
+              subtitle: const Text('No cuenta para PRs'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),

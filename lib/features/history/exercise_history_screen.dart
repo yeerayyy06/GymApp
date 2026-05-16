@@ -211,32 +211,38 @@ class _SessionEntry extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 6),
-            for (var i = 0; i < entry.sets.length; i++)
-              _ExerciseHistorySetRow(
-                index: i + 1,
-                set: entry.sets[i],
-                prs: prs,
-              ),
+            ..._buildSetRows(entry.sets, prs),
           ],
         ),
       ),
     );
   }
+
+  List<Widget> _buildSetRows(List<LoggedSetRow> sets, ExercisePRs? prs) {
+    final rows = <Widget>[];
+    var workingCounter = 0;
+    for (final set in sets) {
+      final label = set.isWarmup ? null : (++workingCounter).toString();
+      rows.add(_ExerciseHistorySetRow(label: label, set: set, prs: prs));
+    }
+    return rows;
+  }
 }
 
 class _ExerciseHistorySetRow extends StatelessWidget {
   const _ExerciseHistorySetRow({
-    required this.index,
+    required this.label,
     required this.set,
     required this.prs,
   });
 
-  final int index;
+  final String? label;
   final LoggedSetRow set;
   final ExercisePRs? prs;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final est1RM = estimatedOneRepMax(weightKg: set.weightKg, reps: set.reps);
     final isWeightPR = !set.isWarmup &&
         prs != null &&
@@ -251,10 +257,18 @@ class _ExerciseHistorySetRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 24,
-            child: Text(
-              '$index',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            child: label == null
+                ? Text(
+                    'W',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: scheme.tertiary,
+                        ),
+                  )
+                : Text(
+                    label!,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
           ),
           Expanded(
             child: Text(

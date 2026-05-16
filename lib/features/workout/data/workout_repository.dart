@@ -42,6 +42,49 @@ class WorkoutRepository {
     return query.watchSingleOrNull();
   }
 
+  Future<WorkoutSessionRow?> getActiveSession() {
+    final query = _db.select(_db.workoutSessions)
+      ..where((t) => t.endedAt.isNull() & t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
+      ..limit(1);
+    return query.getSingleOrNull();
+  }
+
+  Future<WorkoutSessionRow> repeatSession(String sourceSessionId) {
+    return _db.transaction(() async {
+      final source = await (_db.select(_db.loggedExercises)
+            ..where((t) =>
+                t.sessionId.equals(sourceSessionId) & t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.orderInSession)]))
+          .get();
+      final now = _clock();
+      final newSessionId = _idGenerator();
+      await _db.into(_db.workoutSessions).insert(
+            WorkoutSessionsCompanion.insert(
+              id: newSessionId,
+              startedAt: now,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      for (var i = 0; i < source.length; i++) {
+        await _db.into(_db.loggedExercises).insert(
+              LoggedExercisesCompanion.insert(
+                id: _idGenerator(),
+                sessionId: newSessionId,
+                exerciseId: source[i].exerciseId,
+                orderInSession: i,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+      }
+      return (_db.select(_db.workoutSessions)
+            ..where((t) => t.id.equals(newSessionId)))
+          .getSingle();
+    });
+  }
+
   Future<WorkoutSessionRow> startSession() async {
     final now = _clock();
     final id = _idGenerator();
@@ -154,6 +197,7 @@ class WorkoutRepository {
     required double weightKg,
     required int reps,
     double? rpe,
+    bool isWarmup = false,
   }) async {
     final now = _clock();
     final existing = await (_db.select(_db.loggedSets)
@@ -170,6 +214,7 @@ class WorkoutRepository {
             weightKg: weightKg,
             reps: reps,
             rpe: Value(rpe),
+            isWarmup: Value(isWarmup),
             completedAt: Value(now),
             createdAt: now,
             updatedAt: now,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/formatters.dart';
 import 'providers/history_providers.dart';
+import 'widgets/history_calendar.dart';
 import 'widgets/session_card.dart';
 import 'widgets/stats_summary_card.dart';
 
@@ -10,10 +12,13 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final summariesAsync = ref.watch(sessionSummariesProvider);
+    final allSummariesAsync = ref.watch(sessionSummariesProvider);
+    final filteredAsync = ref.watch(filteredSessionSummariesProvider);
+    final selectedDay = ref.watch(selectedDayProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Historial')),
-      body: summariesAsync.when(
+      body: allSummariesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Padding(
@@ -21,22 +26,76 @@ class HistoryScreen extends ConsumerWidget {
             child: Text('Error: $error'),
           ),
         ),
-        data: (summaries) {
-          if (summaries.isEmpty) {
+        data: (allSummaries) {
+          if (allSummaries.isEmpty) {
             return const _EmptyHistoryView();
           }
+          final filtered = filteredAsync.valueOrNull ?? allSummaries;
           return CustomScrollView(
             slivers: [
+              const SliverToBoxAdapter(child: HistoryCalendar()),
+              if (selectedDay != null)
+                SliverToBoxAdapter(
+                  child: _SelectedDayBanner(day: selectedDay),
+                ),
               const SliverToBoxAdapter(child: StatsSummaryCard()),
-              SliverList.builder(
-                itemCount: summaries.length,
-                itemBuilder: (context, index) =>
-                    SessionCard(summary: summaries[index]),
-              ),
+              if (filtered.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(
+                        'No hay entrenamientos este día',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                SliverList.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) =>
+                      SessionCard(summary: filtered[index]),
+                ),
               const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _SelectedDayBanner extends ConsumerWidget {
+  const _SelectedDayBanner({required this.day});
+
+  final DateTime day;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.filter_alt,
+            size: 18,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Filtrando por ${formatDate(day)}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          TextButton(
+            onPressed: () =>
+                ref.read(selectedDayProvider.notifier).state = null,
+            child: const Text('Quitar filtro'),
+          ),
+        ],
       ),
     );
   }

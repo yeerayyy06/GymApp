@@ -13,14 +13,17 @@ class LoggedExerciseCard extends ConsumerWidget {
 
   Future<void> _addSet(BuildContext context, WidgetRef ref) async {
     final sets = ref.read(setsProvider(entry.logged.id)).valueOrNull ?? [];
-    final lastSet = sets.isEmpty ? null : sets.last;
+    final workingSets =
+        sets.where((s) => !s.isWarmup).toList(growable: false);
+    final lastWorkingSet =
+        workingSets.isEmpty ? null : workingSets.last;
     final result = await SetFormDialog.show(
       context,
       exerciseName: entry.exercise.name,
-      setNumber: sets.length + 1,
-      initialWeightKg: lastSet?.weightKg,
-      initialReps: lastSet?.reps,
-      initialRpe: lastSet?.rpe,
+      setNumber: workingSets.length + 1,
+      initialWeightKg: lastWorkingSet?.weightKg,
+      initialReps: lastWorkingSet?.reps,
+      initialRpe: lastWorkingSet?.rpe,
     );
     if (result == null) return;
     await ref.read(workoutRepositoryProvider).addSet(
@@ -28,6 +31,7 @@ class LoggedExerciseCard extends ConsumerWidget {
           weightKg: result.weightKg,
           reps: result.reps,
           rpe: result.rpe,
+          isWarmup: result.isWarmup,
         );
   }
 
@@ -86,16 +90,20 @@ class LoggedExerciseCard extends ConsumerWidget {
                   child: Text('Aún no hay series'),
                 );
               }
-              return Column(
-                children: [
-                  for (var i = 0; i < sets.length; i++)
-                    _SetTile(
-                      index: i + 1,
-                      set: sets[i],
-                      onDelete: () => _deleteSet(ref, sets[i].id),
-                    ),
-                ],
-              );
+              final tiles = <Widget>[];
+              var workingCounter = 0;
+              for (final set in sets) {
+                final label =
+                    set.isWarmup ? null : (++workingCounter).toString();
+                tiles.add(
+                  _SetTile(
+                    label: label,
+                    set: set,
+                    onDelete: () => _deleteSet(ref, set.id),
+                  ),
+                );
+              }
+              return Column(children: tiles);
             },
           ),
           Padding(
@@ -117,12 +125,12 @@ class LoggedExerciseCard extends ConsumerWidget {
 
 class _SetTile extends StatelessWidget {
   const _SetTile({
-    required this.index,
+    required this.label,
     required this.set,
     required this.onDelete,
   });
 
-  final int index;
+  final String? label;
   final LoggedSetRow set;
   final VoidCallback onDelete;
 
@@ -133,27 +141,39 @@ class _SetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final rpeText = set.rpe == null ? '' : '  ·  RPE ${set.rpe}';
     return Dismissible(
       key: ValueKey(set.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: Theme.of(context).colorScheme.errorContainer,
+        color: scheme.errorContainer,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Icon(
-          Icons.delete,
-          color: Theme.of(context).colorScheme.onErrorContainer,
-        ),
+        child: Icon(Icons.delete, color: scheme.onErrorContainer),
       ),
       onDismissed: (_) => onDelete(),
       child: ListTile(
         dense: true,
-        leading: CircleAvatar(
-          radius: 14,
-          child: Text(
-            '$index',
-            style: Theme.of(context).textTheme.labelSmall,
+        leading: SizedBox(
+          width: 28,
+          child: Center(
+            child: label == null
+                ? Text(
+                    'W',
+                    style:
+                        Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: scheme.tertiary,
+                            ),
+                  )
+                : CircleAvatar(
+                    radius: 14,
+                    child: Text(
+                      label!,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ),
           ),
         ),
         title: Text(
