@@ -19,7 +19,12 @@ class ExerciseHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(exerciseHistoryProvider(exerciseId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Historial de ejercicio')),
+      appBar: AppBar(
+        title: const Text(
+          'Historial de ejercicio',
+          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+        ),
+      ),
       body: historyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Error: $error')),
@@ -46,46 +51,100 @@ class _ExerciseHistoryBody extends ConsumerWidget {
     final muscles = exercise.primaryMuscles
         .map((m) => m.displayName)
         .join(', ');
+    final scheme = Theme.of(context).colorScheme;
 
     return CustomScrollView(
       slivers: [
+        // ── Exercise info header ──
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  scheme.primary.withValues(alpha: 0.1),
+                  scheme.tertiary.withValues(alpha: 0.05),
+                ],
+              ),
+              border: Border.all(
+                color: scheme.primary.withValues(alpha: 0.15),
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   exercise.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
                 ),
-                if (muscles.isNotEmpty)
+                if (muscles.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
                     muscles,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                   ),
-                if (exercise.equipment != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      exercise.equipment!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                ],
+                if (exercise.equipment != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(Icons.fitness_center,
+                          size: 13, color: scheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        exercise.equipment!,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                      ),
+                    ],
                   ),
+                ],
               ],
             ),
           ),
         ),
-        SliverToBoxAdapter(child: _PRsCard(prs: history.prs, totalSets: history.totalSets)),
+
+        // ── PRs card ──
+        SliverToBoxAdapter(
+          child: _PRsCard(prs: history.prs, totalSets: history.totalSets),
+        ),
+
+        // ── Session entries ──
         if (history.entries.isEmpty)
           const SliverFillRemaining(
             hasScrollBody: false,
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Center(child: Text('Aún no has registrado este ejercicio')),
+              child:
+                  Center(child: Text('Aún no has registrado este ejercicio')),
             ),
           )
-        else
+        else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Historial por sesión',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+              ),
+            ),
+          ),
           SliverList.builder(
             itemCount: history.entries.length,
             itemBuilder: (context, index) {
@@ -97,6 +156,7 @@ class _ExerciseHistoryBody extends ConsumerWidget {
               );
             },
           ),
+        ],
         const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
       ],
     );
@@ -111,22 +171,42 @@ class _PRsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Récords personales',
-              style: Theme.of(context).textTheme.titleSmall,
+            Row(
+              children: [
+                Icon(Icons.emoji_events_rounded,
+                    size: 18, color: scheme.tertiary),
+                const SizedBox(width: 8),
+                Text(
+                  'Récords personales',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             if (prs == null)
               Text(
                 'Aún no hay récords. Registra una serie para empezar.',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
               )
             else
               Row(
@@ -134,21 +214,35 @@ class _PRsCard extends StatelessWidget {
                   _PRStat(
                     label: 'Peso máx',
                     value: formatWeightKg(prs!.bestWeightKg),
+                    color: scheme.primary,
                   ),
                   _PRStat(
                     label: '1RM est.',
                     value: formatWeightKg(prs!.bestEst1RMKg),
+                    color: scheme.secondary,
                   ),
                   _PRStat(
                     label: 'Vol. serie',
                     value: formatVolume(prs!.bestVolumeSetKg),
+                    color: scheme.tertiary,
                   ),
                 ],
               ),
-            const Divider(height: 22),
-            Text(
-              'Total series registradas: $totalSets',
-              style: Theme.of(context).textTheme.bodyMedium,
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+                height: 1,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                'Total series registradas: $totalSets',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
             ),
           ],
         ),
@@ -158,10 +252,15 @@ class _PRsCard extends StatelessWidget {
 }
 
 class _PRStat extends StatelessWidget {
-  const _PRStat({required this.label, required this.value});
+  const _PRStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   final String label;
   final String value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +271,12 @@ class _PRStat extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  letterSpacing: -0.3,
                 ),
           ),
+          const SizedBox(height: 2),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -195,22 +297,40 @@ class _SessionEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              formatRelativeDate(entry.session.startedAt, now),
-              style: Theme.of(context).textTheme.titleSmall,
+            Row(
+              children: [
+                Text(
+                  formatRelativeDate(entry.session.startedAt, now),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  formatTime(entry.session.startedAt),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ),
-            Text(
-              formatTime(entry.session.startedAt),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             ..._buildSetRows(entry.sets, prs),
           ],
         ),
@@ -256,7 +376,7 @@ class _ExerciseHistorySetRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 24,
+            width: 28,
             child: label == null
                 ? Text(
                     'W',
@@ -265,11 +385,26 @@ class _ExerciseHistorySetRow extends StatelessWidget {
                           color: scheme.tertiary,
                         ),
                   )
-                : Text(
-                    label!,
-                    style: Theme.of(context).textTheme.labelSmall,
+                : Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      label!,
+                      style:
+                          Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: scheme.primary,
+                                fontSize: 10,
+                              ),
+                    ),
                   ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               '${formatWeightKg(set.weightKg)}  ×  ${set.reps}'

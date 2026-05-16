@@ -1,5 +1,15 @@
 import '../../../core/database/app_database.dart';
 
+class ExerciseSummaryLine {
+  const ExerciseSummaryLine({
+    required this.name,
+    required this.setCount,
+  });
+
+  final String name;
+  final int setCount;
+}
+
 class SessionSummary {
   const SessionSummary({
     required this.session,
@@ -8,6 +18,7 @@ class SessionSummary {
     required this.totalExercises,
     required this.totalVolumeKg,
     required this.exerciseNames,
+    this.exerciseSummaries = const [],
   });
 
   final WorkoutSessionRow session;
@@ -16,6 +27,8 @@ class SessionSummary {
   final int totalExercises;
   final double totalVolumeKg;
   final List<String> exerciseNames;
+  /// Exercise name + set count per exercise for rich card display.
+  final List<ExerciseSummaryLine> exerciseSummaries;
 }
 
 class SessionDetail {

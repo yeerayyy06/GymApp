@@ -57,10 +57,13 @@ class HistoryRepository {
         final set = row.readTableOrNull(loggedSets);
         if (logged != null && exercise != null) {
           acc.exerciseOrder.putIfAbsent(logged.id, () => exercise.name);
+          acc.loggedToName.putIfAbsent(logged.id, () => exercise.name);
         }
-        if (set != null && acc.seenSetIds.add(set.id)) {
+        if (set != null && logged != null && acc.seenSetIds.add(set.id)) {
           acc.totalSets++;
           acc.totalVolumeKg += set.weightKg * set.reps;
+          acc.setCountByLogged[logged.id] =
+              (acc.setCountByLogged[logged.id] ?? 0) + 1;
         }
       }
       return accs.values.map((a) => a.build()).toList(growable: false);
@@ -352,6 +355,10 @@ class _SessionAcc {
 
   final WorkoutSessionRow session;
   final Map<String, String> exerciseOrder = {};
+  /// Maps loggedExerciseId → set count (unique set ids only).
+  final Map<String, int> setCountByLogged = {};
+  /// Maps loggedExerciseId → exercise name (to build summaries).
+  final Map<String, String> loggedToName = {};
   final Set<String> seenSetIds = <String>{};
   int totalSets = 0;
   double totalVolumeKg = 0;
@@ -359,6 +366,14 @@ class _SessionAcc {
   SessionSummary build() {
     final endedAt = session.endedAt ?? session.startedAt;
     final names = exerciseOrder.values.toList(growable: false);
+    final summaries = loggedToName.entries
+        .map(
+          (e) => ExerciseSummaryLine(
+            name: e.value,
+            setCount: setCountByLogged[e.key] ?? 0,
+          ),
+        )
+        .toList(growable: false);
     return SessionSummary(
       session: session,
       duration: endedAt.difference(session.startedAt),
@@ -366,6 +381,7 @@ class _SessionAcc {
       totalExercises: names.length,
       totalVolumeKg: totalVolumeKg,
       exerciseNames: names,
+      exerciseSummaries: summaries,
     );
   }
 }

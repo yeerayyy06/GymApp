@@ -17,7 +17,15 @@ class HistoryScreen extends ConsumerWidget {
     final selectedDay = ref.watch(selectedDayProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Historial')),
+      appBar: AppBar(
+        title: const Text(
+          'Historial',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
       body: allSummariesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -45,19 +53,44 @@ class HistoryScreen extends ConsumerWidget {
                   child: Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
-                      child: Text(
-                        'No hay entrenamientos este día',
-                        textAlign: TextAlign.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.event_busy, size: 48, color: Colors.grey),
+                          SizedBox(height: 12),
+                          Text(
+                            'No hay entrenamientos este día',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 )
-              else
+              else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Text(
+                      'Entrenamientos',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                    ),
+                  ),
+                ),
                 SliverList.builder(
                   itemCount: filtered.length,
-                  itemBuilder: (context, index) =>
-                      SessionCard(summary: filtered[index]),
+                  itemBuilder: (context, index) => SessionCard(
+                    summary: filtered[index],
+                  ),
                 ),
+              ],
               const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
             ],
           );
@@ -74,26 +107,45 @@ class _SelectedDayBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: 0.2),
+        ),
+      ),
       child: Row(
         children: [
           Icon(
-            Icons.filter_alt,
+            Icons.filter_alt_rounded,
             size: 18,
-            color: Theme.of(context).colorScheme.primary,
+            color: scheme.primary,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Filtrando por ${formatDate(day)}',
-              style: Theme.of(context).textTheme.bodyMedium,
+              formatDate(day),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ),
-          TextButton(
-            onPressed: () =>
-                ref.read(selectedDayProvider.notifier).state = null,
-            child: const Text('Quitar filtro'),
+          SizedBox(
+            height: 28,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                visualDensity: VisualDensity.compact,
+              ),
+              onPressed: () =>
+                  ref.read(selectedDayProvider.notifier).state = null,
+              child: const Text('Quitar filtro'),
+            ),
           ),
         ],
       ),
@@ -106,24 +158,50 @@ class _EmptyHistoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.history, size: 72),
-            const SizedBox(height: 16),
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    scheme.primary.withValues(alpha: 0.15),
+                    scheme.tertiary.withValues(alpha: 0.1),
+                  ],
+                ),
+              ),
+              child: Icon(
+                Icons.history_rounded,
+                size: 48,
+                color: scheme.primary.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'Sin entrenamientos aún',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               'Cuando termines una sesión aparecerá aquí, con tus PRs, '
               'volumen total y progresión por ejercicio.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
             ),
           ],
         ),

@@ -41,94 +41,175 @@ class SessionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(clockProvider)();
+    final scheme = Theme.of(context).colorScheme;
     final session = summary.session;
     final relativeDate = formatRelativeDate(session.startedAt, now);
     final time = formatTime(session.startedAt);
-    final displayedExercises = summary.exerciseNames.take(4).toList();
-    final extraExercises = summary.exerciseNames.length - displayedExercises.length;
+    final exerciseSummaries = summary.exerciseSummaries;
+    final displayedExercises = exerciseSummaries.take(5).toList();
+    final extraCount = exerciseSummaries.length - displayedExercises.length;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: InkWell(
-        onTap: () => context.push('/history/session/${session.id}'),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          relativeDate,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          '$time  ·  ${formatDuration(summary.duration)}',
-                          style: Theme.of(context).textTheme.bodySmall,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => context.push('/history/session/${session.id}'),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header: date + menu ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            relativeDate,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            time,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'delete') _confirmDelete(context, ref);
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Eliminar'),
                         ),
                       ],
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'delete') _confirmDelete(context, ref);
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Eliminar'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _StatChip(
-                    icon: Icons.fitness_center,
-                    label: '${summary.totalExercises} ejercicios',
-                  ),
-                  const SizedBox(width: 8),
-                  _StatChip(
-                    icon: Icons.format_list_numbered,
-                    label: '${summary.totalSets} series',
-                  ),
-                  const SizedBox(width: 8),
-                  _StatChip(
-                    icon: Icons.scale,
-                    label: formatVolume(summary.totalVolumeKg),
-                  ),
-                ],
-              ),
-              if (displayedExercises.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                ...displayedExercises.map(
-                  (name) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 1),
-                    child: Text(
-                      '•  $name',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
+                  ],
                 ),
-                if (extraExercises > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, left: 12),
-                    child: Text(
-                      '+$extraExercises más',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontStyle: FontStyle.italic,
+
+                const SizedBox(height: 12),
+
+                // ── Stats row ──
+                Row(
+                  children: [
+                    _StatPill(
+                      icon: Icons.timer_outlined,
+                      label: formatDuration(summary.duration),
+                      scheme: scheme,
+                    ),
+                    const SizedBox(width: 8),
+                    _StatPill(
+                      icon: Icons.fitness_center,
+                      label: formatVolume(summary.totalVolumeKg),
+                      scheme: scheme,
+                    ),
+                    const SizedBox(width: 8),
+                    _StatPill(
+                      icon: Icons.repeat,
+                      label: '${summary.totalSets} series',
+                      scheme: scheme,
+                    ),
+                  ],
+                ),
+
+                // ── Exercise summary list ──
+                if (displayedExercises.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: scheme.surface.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ...displayedExercises.map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    e.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
+                                Text(
+                                  '${e.setCount} ${e.setCount == 1 ? 'serie' : 'series'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                        if (extraCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4, left: 14),
+                            child: Text(
+                              '+$extraCount más',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: scheme.onSurfaceVariant
+                                        .withValues(alpha: 0.7),
+                                  ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -136,21 +217,40 @@ class SessionCard extends ConsumerWidget {
   }
 }
 
-class _StatChip extends StatelessWidget {
-  const _StatChip({required this.icon, required this.label});
+class _StatPill extends StatelessWidget {
+  const _StatPill({
+    required this.icon,
+    required this.label,
+    required this.scheme,
+  });
 
   final IconData icon;
   final String label;
+  final ColorScheme scheme;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14),
-        const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: scheme.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: scheme.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

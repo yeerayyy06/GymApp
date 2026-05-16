@@ -22,7 +22,10 @@ class SessionDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Entrenamiento'),
+        title: const Text(
+          'Entrenamiento',
+          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+        ),
         actions: [
           IconButton(
             tooltip: 'Eliminar',
@@ -124,16 +127,30 @@ class _RepeatBar extends ConsumerWidget {
     if (detail == null || detail!.exercises.isEmpty) {
       return const SizedBox.shrink();
     }
+    final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       top: false,
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: 0.2),
+            ),
+          ),
+        ),
         child: SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: () => _onRepeat(context, ref),
-            icon: const Icon(Icons.replay),
+            icon: const Icon(Icons.replay_rounded),
             label: const Text('Repetir entrenamiento'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
           ),
         ),
       ),
@@ -150,37 +167,59 @@ class _DetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = detail.session;
+    final scheme = Theme.of(context).colorScheme;
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        // ── Session summary header ──
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                scheme.primary.withValues(alpha: 0.12),
+                scheme.tertiary.withValues(alpha: 0.06),
+              ],
+            ),
+            border: Border.all(
+              color: scheme.primary.withValues(alpha: 0.15),
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 '${formatDate(session.startedAt)} · ${formatTime(session.startedAt)}',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   _SummaryStat(
                     icon: Icons.timer_outlined,
                     value: formatDuration(detail.duration),
                     label: 'Duración',
+                    color: scheme.primary,
                   ),
                   _SummaryStat(
                     icon: Icons.scale,
                     value: formatVolume(detail.totalVolumeKg),
                     label: 'Volumen',
+                    color: scheme.secondary,
                   ),
                   _SummaryStat(
                     icon: Icons.format_list_numbered,
                     value: '${detail.totalSets}',
                     label: 'Series',
+                    color: scheme.tertiary,
                   ),
                 ],
               ),
@@ -206,11 +245,13 @@ class _SummaryStat extends StatelessWidget {
     required this.icon,
     required this.value,
     required this.label,
+    required this.color,
   });
 
   final IconData icon;
   final String value;
   final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -220,16 +261,19 @@ class _SummaryStat extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16),
-              const SizedBox(width: 4),
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 5),
               Text(
                 value,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      letterSpacing: -0.3,
                     ),
               ),
             ],
           ),
+          const SizedBox(height: 2),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -245,14 +289,22 @@ class _ExerciseSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final setRows = <Widget>[];
     var workingCounter = 0;
     for (final set in detail.sets) {
       final label = set.isWarmup ? null : (++workingCounter).toString();
       setRows.add(_SetRow(label: label, set: set, prs: prs));
     }
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -260,9 +312,10 @@ class _ExerciseSection extends StatelessWidget {
             onTap: () => context.push(
               '/history/exercise/${detail.exercise.id}',
             ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(14)),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
               child: Row(
                 children: [
                   Expanded(
@@ -271,17 +324,27 @@ class _ExerciseSection extends StatelessWidget {
                       children: [
                         Text(
                           detail.exercise.name,
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           '${detail.sets.length} series · '
                           '${formatVolume(detail.exerciseVolumeKg)}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
                 ],
               ),
             ),
@@ -292,7 +355,7 @@ class _ExerciseSection extends StatelessWidget {
               child: Text('Sin series registradas'),
             ),
           ...setRows,
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -322,7 +385,7 @@ class _SetRow extends StatelessWidget {
         est1RM >= prs!.bestEst1RMKg - 0.001;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
       child: Row(
         children: [
           SizedBox(
@@ -337,16 +400,26 @@ class _SetRow extends StatelessWidget {
                                 color: scheme.tertiary,
                               ),
                     )
-                  : CircleAvatar(
-                      radius: 12,
+                  : Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: scheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
                       child: Text(
                         label!,
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style:
+                            Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: scheme.primary,
+                                ),
                       ),
                     ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               '${formatWeightKg(set.weightKg)}  ×  ${set.reps}'
@@ -421,16 +494,31 @@ class _NotesSectionState extends ConsumerState<_NotesSection> {
   @override
   Widget build(BuildContext context) {
     final notes = widget.session.notes ?? '';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Icon(Icons.sticky_note_2_outlined,
+                  size: 18, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 8),
               Text(
                 'Notas',
-                style: Theme.of(context).textTheme.titleSmall,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const Spacer(),
               if (_isEditing)
@@ -441,18 +529,21 @@ class _NotesSectionState extends ConsumerState<_NotesSection> {
               else
                 TextButton.icon(
                   onPressed: () => setState(() => _isEditing = true),
-                  icon: const Icon(Icons.edit, size: 16),
+                  icon: const Icon(Icons.edit, size: 14),
                   label: Text(notes.isEmpty ? 'Añadir' : 'Editar'),
                 ),
             ],
           ),
+          const SizedBox(height: 4),
           if (_isEditing)
             TextField(
               controller: _controller,
               maxLines: 4,
               autofocus: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 hintText: 'Cómo te sentiste, sensaciones, técnica...',
               ),
             )
@@ -464,6 +555,9 @@ class _NotesSectionState extends ConsumerState<_NotesSection> {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontStyle:
                           notes.isEmpty ? FontStyle.italic : FontStyle.normal,
+                      color: notes.isEmpty
+                          ? scheme.onSurfaceVariant
+                          : null,
                     ),
               ),
             ),
