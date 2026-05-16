@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/history/exercise_history_screen.dart';
 import '../../features/history/history_screen.dart';
+import '../../features/history/session_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/workout/workout_screen.dart';
 import '../../shared/main_layout.dart';
@@ -10,6 +12,9 @@ abstract final class AppRoutes {
   static const history = '/history';
   static const workout = '/workout';
   static const profile = '/profile';
+
+  static String historySession(String id) => '$history/session/$id';
+  static String historyExercise(String id) => '$history/exercise/$id';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -25,6 +30,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.history,
                 builder: (context, state) => const HistoryScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'session/:id',
+                    builder: (context, state) => SessionDetailScreen(
+                      sessionId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'exercise/:id',
+                    builder: (context, state) => ExerciseHistoryScreen(
+                      exerciseId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
