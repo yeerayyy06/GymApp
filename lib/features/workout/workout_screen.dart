@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/utils/formatters.dart';
+import 'providers/rest_timer_provider.dart';
 import 'providers/workout_providers.dart';
 import 'widgets/elapsed_timer.dart';
 import 'widgets/exercise_picker_sheet.dart';
 import 'widgets/logged_exercise_card.dart';
+import 'widgets/rest_timer_banner.dart';
 
 class WorkoutScreen extends ConsumerWidget {
   const WorkoutScreen({super.key});
@@ -78,6 +80,7 @@ class _EndSessionAction extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
+    ref.read(restTimerProvider.notifier).skip();
     await ref.read(workoutRepositoryProvider).endSession(session.id);
   }
 }
@@ -204,6 +207,7 @@ class _ActiveSessionView extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
+    ref.read(restTimerProvider.notifier).skip();
     await ref.read(workoutRepositoryProvider).cancelSession(session.id);
   }
 
@@ -327,6 +331,7 @@ class _ActiveSessionView extends ConsumerWidget {
             },
           ),
         ),
+        const RestTimerBanner(),
         SafeArea(
           top: false,
           child: Container(

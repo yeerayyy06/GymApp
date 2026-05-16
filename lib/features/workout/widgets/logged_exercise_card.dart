@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../data/workout_repository.dart';
+import '../providers/rest_timer_provider.dart';
 import '../providers/workout_providers.dart';
 import 'set_form_dialog.dart';
 
@@ -33,6 +34,9 @@ class LoggedExerciseCard extends ConsumerWidget {
           rpe: result.rpe,
           isWarmup: result.isWarmup,
         );
+    if (!result.isWarmup) {
+      ref.read(restTimerProvider.notifier).start();
+    }
   }
 
   Future<void> _editSet(
