@@ -8,9 +8,16 @@ import '../providers/workout_providers.dart';
 import 'set_form_dialog.dart';
 
 class LoggedExerciseCard extends ConsumerWidget {
-  const LoggedExerciseCard({super.key, required this.entry});
+  const LoggedExerciseCard({
+    super.key,
+    required this.entry,
+    this.canMoveUp = true,
+    this.canMoveDown = true,
+  });
 
   final LoggedExerciseWithDetails entry;
+  final bool canMoveUp;
+  final bool canMoveDown;
 
   Future<void> _addSet(BuildContext context, WidgetRef ref) async {
     final sets = ref.read(setsProvider(entry.logged.id)).valueOrNull ?? [];
@@ -70,6 +77,14 @@ class LoggedExerciseCard extends ConsumerWidget {
         .removeLoggedExercise(entry.logged.id);
   }
 
+  Future<void> _move(WidgetRef ref, int delta) async {
+    await ref.read(workoutRepositoryProvider).moveLoggedExercise(
+          sessionId: entry.logged.sessionId,
+          loggedExerciseId: entry.logged.id,
+          delta: delta,
+        );
+  }
+
   Future<void> _deleteSet(WidgetRef ref, String setId) async {
     await ref.read(workoutRepositoryProvider).deleteSet(setId);
   }
@@ -121,12 +136,44 @@ class LoggedExerciseCard extends ConsumerWidget {
                 ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
-                    if (value == 'remove') _removeExercise(ref);
+                    switch (value) {
+                      case 'remove':
+                        _removeExercise(ref);
+                      case 'move_up':
+                        _move(ref, -1);
+                      case 'move_down':
+                        _move(ref, 1);
+                    }
                   },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
+                  itemBuilder: (_) => [
+                    if (canMoveUp)
+                      const PopupMenuItem(
+                        value: 'move_up',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.arrow_upward_rounded),
+                          title: Text('Mover arriba'),
+                        ),
+                      ),
+                    if (canMoveDown)
+                      const PopupMenuItem(
+                        value: 'move_down',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.arrow_downward_rounded),
+                          title: Text('Mover abajo'),
+                        ),
+                      ),
+                    const PopupMenuItem(
                       value: 'remove',
-                      child: Text('Eliminar ejercicio'),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.delete_outline_rounded),
+                        title: Text('Eliminar ejercicio'),
+                      ),
                     ),
                   ],
                 ),

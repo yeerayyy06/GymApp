@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'plate_calculator_dialog.dart';
+
 class SetFormResult {
   const SetFormResult({
     required this.weightKg,
@@ -111,6 +113,21 @@ class _SetFormDialogState extends State<SetFormDialog> {
     );
   }
 
+  void _showPlateCalculator() {
+    final parsed = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    if (parsed == null || parsed <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Introduce un peso antes de calcular los discos'),
+        ),
+      );
+      return;
+    }
+    PlateCalculatorDialog.show(context, targetWeightKg: parsed);
+  }
+
   @override
   Widget build(BuildContext context) {
     final String title;
@@ -201,6 +218,18 @@ class _SetFormDialogState extends State<SetFormDialog> {
               subtitle: const Text('No cuenta para PRs'),
               dense: true,
               contentPadding: EdgeInsets.zero,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _showPlateCalculator,
+                icon: const Icon(Icons.calculate_rounded, size: 16),
+                label: const Text('Calculadora de discos'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              ),
             ),
           ],
         ),

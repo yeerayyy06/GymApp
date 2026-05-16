@@ -231,6 +231,39 @@ class WorkoutRepository {
     );
   }
 
+  Future<void> moveLoggedExercise({
+    required String sessionId,
+    required String loggedExerciseId,
+    required int delta,
+  }) async {
+    final now = _clock();
+    return _db.transaction(() async {
+      final ordered = await (_db.select(_db.loggedExercises)
+            ..where((t) =>
+                t.sessionId.equals(sessionId) & t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.orderInSession)]))
+          .get();
+      final index =
+          ordered.indexWhere((e) => e.id == loggedExerciseId);
+      if (index < 0) return;
+      final newIndex = index + delta;
+      if (newIndex < 0 || newIndex >= ordered.length) return;
+      final moved = ordered.removeAt(index);
+      ordered.insert(newIndex, moved);
+      for (var i = 0; i < ordered.length; i++) {
+        if (ordered[i].orderInSession == i) continue;
+        await (_db.update(_db.loggedExercises)
+              ..where((t) => t.id.equals(ordered[i].id)))
+            .write(
+          LoggedExercisesCompanion(
+            orderInSession: Value(i),
+            updatedAt: Value(now),
+          ),
+        );
+      }
+    });
+  }
+
   Stream<List<LoggedSetRow>> watchSets(String loggedExerciseId) {
     final query = _db.select(_db.loggedSets)
       ..where((t) =>

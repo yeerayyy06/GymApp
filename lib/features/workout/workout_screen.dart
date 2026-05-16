@@ -65,18 +65,18 @@ class _EndSessionAction extends ConsumerWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Finalizar entrenamiento'),
         content: const Text(
           '¿Quieres dar por terminada la sesión actual?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Finalizar'),
           ),
         ],
@@ -194,8 +194,10 @@ class _StartSessionView extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            onPressed: () =>
-                ref.read(workoutRepositoryProvider).startSession(),
+            onPressed: () {
+              ref.read(restTimerProvider.notifier).skip();
+              ref.read(workoutRepositoryProvider).startSession();
+            },
             icon: const Icon(Icons.play_arrow_rounded),
             label: const Text('Empezar sesión vacía'),
             style: OutlinedButton.styleFrom(
@@ -306,6 +308,7 @@ class _RoutineQuickStart extends ConsumerWidget {
           ),
           FilledButton.tonalIcon(
             onPressed: () async {
+              ref.read(restTimerProvider.notifier).skip();
               await ref
                   .read(workoutRepositoryProvider)
                   .startSessionFromRoutine(routine.routine.id);
@@ -336,18 +339,18 @@ class _ActiveSessionView extends ConsumerWidget {
   Future<void> _confirmCancel(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Cancelar entrenamiento'),
         content: const Text(
           'Se descartará la sesión actual y los datos registrados.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Volver'),
           ),
           FilledButton.tonal(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Descartar sesión'),
           ),
         ],
@@ -472,7 +475,11 @@ class _ActiveSessionView extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: entries.length,
                 itemBuilder: (context, index) {
-                  return LoggedExerciseCard(entry: entries[index]);
+                  return LoggedExerciseCard(
+                    entry: entries[index],
+                    canMoveUp: index > 0,
+                    canMoveDown: index < entries.length - 1,
+                  );
                 },
               );
             },
