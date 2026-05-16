@@ -35,6 +35,31 @@ class LoggedExerciseCard extends ConsumerWidget {
         );
   }
 
+  Future<void> _editSet(
+    BuildContext context,
+    WidgetRef ref,
+    LoggedSetRow set,
+  ) async {
+    final result = await SetFormDialog.show(
+      context,
+      exerciseName: entry.exercise.name,
+      setNumber: set.setNumber,
+      initialWeightKg: set.weightKg,
+      initialReps: set.reps,
+      initialRpe: set.rpe,
+      initialIsWarmup: set.isWarmup,
+      isEditing: true,
+    );
+    if (result == null) return;
+    await ref.read(workoutRepositoryProvider).updateSet(
+          setId: set.id,
+          weightKg: result.weightKg,
+          reps: result.reps,
+          rpe: result.rpe,
+          isWarmup: result.isWarmup,
+        );
+  }
+
   Future<void> _removeExercise(WidgetRef ref) async {
     await ref
         .read(workoutRepositoryProvider)
@@ -99,6 +124,7 @@ class LoggedExerciseCard extends ConsumerWidget {
                   _SetTile(
                     label: label,
                     set: set,
+                    onTap: () => _editSet(context, ref, set),
                     onDelete: () => _deleteSet(ref, set.id),
                   ),
                 );
@@ -127,11 +153,13 @@ class _SetTile extends StatelessWidget {
   const _SetTile({
     required this.label,
     required this.set,
+    required this.onTap,
     required this.onDelete,
   });
 
   final String? label;
   final LoggedSetRow set;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   String _formatWeight(double value) {
@@ -155,6 +183,7 @@ class _SetTile extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: ListTile(
         dense: true,
+        onTap: onTap,
         leading: SizedBox(
           width: 28,
           child: Center(

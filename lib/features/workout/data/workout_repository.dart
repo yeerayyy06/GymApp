@@ -234,4 +234,24 @@ class WorkoutRepository {
       ),
     );
   }
+
+  Future<void> updateSet({
+    required String setId,
+    required double weightKg,
+    required int reps,
+    double? rpe,
+    bool isWarmup = false,
+  }) async {
+    final now = _clock();
+    await (_db.update(_db.loggedSets)..where((t) => t.id.equals(setId)))
+        .write(
+      LoggedSetsCompanion(
+        weightKg: Value(weightKg),
+        reps: Value(reps),
+        rpe: Value(rpe),
+        isWarmup: Value(isWarmup),
+        updatedAt: Value(now),
+      ),
+    );
+  }
 }

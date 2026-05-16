@@ -24,6 +24,7 @@ class SetFormDialog extends StatefulWidget {
     this.initialReps,
     this.initialRpe,
     this.initialIsWarmup = false,
+    this.isEditing = false,
   });
 
   final String exerciseName;
@@ -32,6 +33,7 @@ class SetFormDialog extends StatefulWidget {
   final int? initialReps;
   final double? initialRpe;
   final bool initialIsWarmup;
+  final bool isEditing;
 
   static Future<SetFormResult?> show(
     BuildContext context, {
@@ -41,6 +43,7 @@ class SetFormDialog extends StatefulWidget {
     int? initialReps,
     double? initialRpe,
     bool initialIsWarmup = false,
+    bool isEditing = false,
   }) {
     return showDialog<SetFormResult>(
       context: context,
@@ -51,6 +54,7 @@ class SetFormDialog extends StatefulWidget {
         initialReps: initialReps,
         initialRpe: initialRpe,
         initialIsWarmup: initialIsWarmup,
+        isEditing: isEditing,
       ),
     );
   }
@@ -109,12 +113,16 @@ class _SetFormDialogState extends State<SetFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final String title;
+    if (widget.isEditing) {
+      title = 'Editar serie · ${widget.exerciseName}';
+    } else if (_isWarmup) {
+      title = 'Calentamiento · ${widget.exerciseName}';
+    } else {
+      title = 'Serie ${widget.setNumber} · ${widget.exerciseName}';
+    }
     return AlertDialog(
-      title: Text(
-        _isWarmup
-            ? 'Calentamiento · ${widget.exerciseName}'
-            : 'Serie ${widget.setNumber} · ${widget.exerciseName}',
-      ),
+      title: Text(title),
       content: Form(
         key: _formKey,
         child: Column(

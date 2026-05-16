@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/utils/formatters.dart';
 import 'providers/workout_providers.dart';
+import 'widgets/elapsed_timer.dart';
 import 'widgets/exercise_picker_sheet.dart';
 import 'widgets/logged_exercise_card.dart';
 
@@ -133,12 +135,6 @@ class _ActiveSessionView extends ConsumerWidget {
 
   final WorkoutSessionRow session;
 
-  String _formatTime(DateTime dt) {
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
-
   Future<void> _addExercise(BuildContext context, WidgetRef ref) async {
     final picked = await ExercisePickerSheet.show(context);
     if (picked == null) return;
@@ -181,17 +177,35 @@ class _ActiveSessionView extends ConsumerWidget {
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Row(
             children: [
-              const Icon(Icons.timer_outlined, size: 18),
+              const Icon(Icons.timer_outlined, size: 22),
               const SizedBox(width: 8),
-              Text(
-                'Sesión iniciada a las ${_formatTime(session.startedAt)}',
-                style: Theme.of(context).textTheme.bodyMedium,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ElapsedTimer(
+                      startedAt: session.startedAt,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
+                    ),
+                    Text(
+                      'Iniciado a las ${formatTime(session.startedAt)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               TextButton(
                 onPressed: () => _confirmCancel(context, ref),
                 child: const Text('Descartar'),
