@@ -48,20 +48,28 @@ class HistoryScreen extends ConsumerWidget {
                 ),
               const SliverToBoxAdapter(child: StatsSummaryCard()),
               if (filtered.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.event_busy, size: 48, color: Colors.grey),
-                          SizedBox(height: 12),
+                          Icon(
+                            Icons.event_busy,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 12),
                           Text(
                             'No hay entrenamientos este día',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),

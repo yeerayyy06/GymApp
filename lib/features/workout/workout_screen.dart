@@ -16,7 +16,13 @@ class WorkoutScreen extends ConsumerWidget {
     final bootstrap = ref.watch(bootstrapProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Entrenar'),
+        title: const Text(
+          'Entrenar',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+        ),
         actions: const [_EndSessionAction()],
       ),
       body: bootstrap.when(
@@ -42,7 +48,7 @@ class _EndSessionAction extends ConsumerWidget {
     if (session == null) return const SizedBox.shrink();
     return IconButton(
       tooltip: 'Finalizar entrenamiento',
-      icon: const Icon(Icons.check_circle_outline),
+      icon: const Icon(Icons.check_circle_rounded),
       onPressed: () => _confirmEnd(context, ref, session),
     );
   }
@@ -98,30 +104,63 @@ class _StartSessionView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.fitness_center, size: 72),
-            const SizedBox(height: 16),
+            Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    scheme.primary.withValues(alpha: 0.18),
+                    scheme.tertiary.withValues(alpha: 0.1),
+                  ],
+                ),
+              ),
+              child: Icon(
+                Icons.fitness_center_rounded,
+                size: 56,
+                color: scheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'Listo para entrenar',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               'Inicia una sesión para empezar a registrar ejercicios y series.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             FilledButton.icon(
               onPressed: () =>
                   ref.read(workoutRepositoryProvider).startSession(),
-              icon: const Icon(Icons.play_arrow),
+              icon: const Icon(Icons.play_arrow_rounded),
               label: const Text('Iniciar entrenamiento'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
             ),
           ],
         ),
@@ -170,19 +209,45 @@ class _ActiveSessionView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loggedAsync =
-        ref.watch(loggedExercisesProvider(session.id));
+    final scheme = Theme.of(context).colorScheme;
+    final loggedAsync = ref.watch(loggedExercisesProvider(session.id));
 
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                scheme.primary.withValues(alpha: 0.12),
+                scheme.tertiary.withValues(alpha: 0.06),
+              ],
+            ),
+            border: Border.all(
+              color: scheme.primary.withValues(alpha: 0.15),
+            ),
+          ),
           child: Row(
             children: [
-              const Icon(Icons.timer_outlined, size: 22),
-              const SizedBox(width: 8),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.timer_rounded,
+                  size: 20,
+                  color: scheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,9 +256,10 @@ class _ActiveSessionView extends ConsumerWidget {
                       startedAt: session.startedAt,
                       style: Theme.of(context)
                           .textTheme
-                          .titleMedium
+                          .titleLarge
                           ?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
                             fontFeatures: const [
                               FontFeature.tabularFigures(),
                             ],
@@ -201,13 +267,18 @@ class _ActiveSessionView extends ConsumerWidget {
                     ),
                     Text(
                       'Iniciado a las ${formatTime(session.startedAt)}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),
               ),
               TextButton(
                 onPressed: () => _confirmCancel(context, ref),
+                style: TextButton.styleFrom(
+                  foregroundColor: scheme.error,
+                ),
                 child: const Text('Descartar'),
               ),
             ],
@@ -220,18 +291,34 @@ class _ActiveSessionView extends ConsumerWidget {
             error: (error, _) => Center(child: Text('Error: $error')),
             data: (entries) {
               if (entries.isEmpty) {
-                return const Center(
+                return Center(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Aún no has añadido ejercicios.\nPulsa el botón para empezar.',
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 48,
+                          color: scheme.onSurfaceVariant
+                              .withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Aún no has añadido ejercicios.\nPulsa el botón para empezar.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: entries.length,
                 itemBuilder: (context, index) {
                   return LoggedExerciseCard(entry: entries[index]);
@@ -242,14 +329,27 @@ class _ActiveSessionView extends ConsumerWidget {
         ),
         SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: scheme.outlineVariant.withValues(alpha: 0.2),
+                ),
+              ),
+            ),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () => _addExercise(context, ref),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded),
                 label: const Text('Añadir ejercicio'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
           ),

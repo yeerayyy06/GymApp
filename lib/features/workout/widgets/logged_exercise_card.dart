@@ -72,29 +72,59 @@ class LoggedExerciseCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     final setsAsync = ref.watch(setsProvider(entry.logged.id));
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ListTile(
-            title: Text(
-              entry.exercise.name,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            subtitle: entry.exercise.equipment == null
-                ? null
-                : Text(entry.exercise.equipment!),
-            trailing: PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'remove') _removeExercise(ref);
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
-                  value: 'remove',
-                  child: Text('Eliminar ejercicio'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 4, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.exercise.name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      if (entry.exercise.equipment != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          entry.exercise.equipment!,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'remove') _removeExercise(ref);
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text('Eliminar ejercicio'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -110,9 +140,13 @@ class LoggedExerciseCard extends ConsumerWidget {
             ),
             data: (sets) {
               if (sets.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text('Aún no hay series'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 4),
+                  child: Text(
+                    'Aún no hay series',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
                 );
               }
               final tiles = <Widget>[];
@@ -133,13 +167,16 @@ class LoggedExerciseCard extends ConsumerWidget {
             },
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () => _addSet(context, ref),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Añadir serie'),
+                style: TextButton.styleFrom(
+                  foregroundColor: scheme.primary,
+                ),
               ),
             ),
           ),
@@ -178,35 +215,61 @@ class _SetTile extends StatelessWidget {
         color: scheme.errorContainer,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Icon(Icons.delete, color: scheme.onErrorContainer),
+        child: Icon(Icons.delete_rounded, color: scheme.onErrorContainer),
       ),
       onDismissed: (_) => onDelete(),
-      child: ListTile(
-        dense: true,
+      child: InkWell(
         onTap: onTap,
-        leading: SizedBox(
-          width: 28,
-          child: Center(
-            child: label == null
-                ? Text(
-                    'W',
-                    style:
-                        Theme.of(context).textTheme.labelSmall?.copyWith(
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: label == null
+                    ? Text(
+                        'W',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: scheme.tertiary,
                             ),
-                  )
-                : CircleAvatar(
-                    radius: 14,
-                    child: Text(
-                      label!,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ),
+                        textAlign: TextAlign.center,
+                      )
+                    : Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          label!,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: scheme.primary,
+                              ),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${_formatWeight(set.weightKg)} kg  ×  ${set.reps}$rpeText',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+            ],
           ),
-        ),
-        title: Text(
-          '${_formatWeight(set.weightKg)} kg  ×  ${set.reps}$rpeText',
         ),
       ),
     );

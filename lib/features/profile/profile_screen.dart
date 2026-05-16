@@ -24,10 +24,18 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final entriesAsync = ref.watch(bodyweightEntriesProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
+      appBar: AppBar(
+        title: const Text(
+          'Perfil',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addEntry(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Registrar peso'),
       ),
       body: entriesAsync.when(
@@ -47,6 +55,7 @@ class _ProfileBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(clockProvider)();
+    final scheme = Theme.of(context).colorScheme;
     final latest = entries.isEmpty ? null : entries.first;
     final previous = entries.length >= 2 ? entries[1] : null;
     final delta =
@@ -57,17 +66,36 @@ class _ProfileBody extends ConsumerWidget {
       children: [
         _BodyweightHeader(latest: latest, delta: delta, now: now),
         const _TrainingSummaryCard(),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
           child: Text(
             'Historial de peso',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
           ),
         ),
         if (entries.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: Text('Aún no hay registros de peso')),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.monitor_weight_outlined,
+                    size: 40,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Aún no hay registros de peso',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
           )
         else
           ...entries.map(
@@ -92,52 +120,82 @@ class _BodyweightHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
+    return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Peso corporal',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            const SizedBox(height: 6),
-            if (latest == null)
-              Text(
-                'Sin registros',
-                style: Theme.of(context).textTheme.headlineSmall,
-              )
-            else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    formatWeightKg(latest!.weightKg),
-                    style:
-                        Theme.of(context).textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                  ),
-                  const SizedBox(width: 12),
-                  if (delta != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: _DeltaChip(delta: delta!),
-                    ),
-                ],
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.tertiary.withValues(alpha: 0.06),
+          ],
+        ),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.monitor_weight_rounded,
+                size: 18,
+                color: scheme.primary,
               ),
-            const SizedBox(height: 4),
-            if (latest != null)
+              const SizedBox(width: 8),
               Text(
-                formatRelativeDate(latest!.measuredAt, now),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                'Peso corporal',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
                       color: scheme.onSurfaceVariant,
                     ),
               ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (latest == null)
+            Text(
+              'Sin registros',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formatWeightKg(latest!.weightKg),
+                  style:
+                      Theme.of(context).textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -1,
+                          ),
+                ),
+                const SizedBox(width: 12),
+                if (delta != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _DeltaChip(delta: delta!),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 4),
+          if (latest != null)
+            Text(
+              formatRelativeDate(latest!.measuredAt, now),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+        ],
       ),
     );
   }
@@ -157,16 +215,24 @@ class _DeltaChip extends StatelessWidget {
         ? scheme.onSurfaceVariant
         : (isPositive ? scheme.tertiary : scheme.primary);
     final icon = isZero
-        ? Icons.remove
-        : (isPositive ? Icons.arrow_upward : Icons.arrow_downward);
+        ? Icons.remove_rounded
+        : (isPositive
+            ? Icons.arrow_upward_rounded
+            : Icons.arrow_downward_rounded);
     final text = isZero
         ? '0 kg'
         : '${isPositive ? '+' : '−'}${delta.abs().toStringAsFixed(1)} kg';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.18),
+            color.withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -177,8 +243,9 @@ class _DeltaChip extends StatelessWidget {
             text,
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: color,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -193,37 +260,61 @@ class _TrainingSummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(historyStatsProvider);
-    return Card(
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: scheme.surfaceContainerHigh,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
         child: statsAsync.when(
           loading: () => const SizedBox(
-            height: 50,
+            height: 60,
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (error, _) => Text('Error: $error'),
           data: (stats) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Entrenamientos',
-                style: Theme.of(context).textTheme.titleSmall,
+              Row(
+                children: [
+                  Icon(
+                    Icons.fitness_center_rounded,
+                    size: 18,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Entrenamientos',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   _SummaryBlock(
                     value: '${stats.totalSessions}',
                     label: 'Sesiones',
+                    accent: scheme.primary,
                   ),
                   _SummaryBlock(
                     value: '${stats.totalSets}',
                     label: 'Series',
+                    accent: scheme.secondary,
                   ),
                   _SummaryBlock(
                     value: formatVolume(stats.totalVolumeKg),
                     label: 'Volumen',
+                    accent: scheme.tertiary,
                   ),
                 ],
               ),
@@ -236,10 +327,15 @@ class _TrainingSummaryCard extends ConsumerWidget {
 }
 
 class _SummaryBlock extends StatelessWidget {
-  const _SummaryBlock({required this.value, required this.label});
+  const _SummaryBlock({
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
 
   final String value;
   final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -249,11 +345,19 @@ class _SummaryBlock extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  color: accent,
                 ),
           ),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
         ],
       ),
     );
@@ -292,17 +396,66 @@ class _BodyweightTile extends ConsumerWidget {
       key: ValueKey(entry.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: scheme.errorContainer,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: scheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Icon(Icons.delete, color: scheme.onErrorContainer),
+        child: Icon(Icons.delete_rounded, color: scheme.onErrorContainer),
       ),
       onDismissed: (_) => _delete(ref),
-      child: ListTile(
-        onTap: () => _edit(context, ref),
-        title: Text(formatWeightKg(entry.weightKg)),
-        subtitle: Text(formatRelativeDate(entry.measuredAt, now)),
-        trailing: const Icon(Icons.chevron_right, size: 18),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: scheme.surfaceContainerHigh,
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: () => _edit(context, ref),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          formatWeightKg(entry.weightKg),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatRelativeDate(entry.measuredAt, now),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

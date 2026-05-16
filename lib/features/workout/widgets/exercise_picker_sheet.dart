@@ -28,6 +28,7 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final exercisesAsync = ref.watch(exercisesProvider);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
@@ -48,15 +49,20 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
                   children: [
                     Text(
                       'Añadir ejercicio',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       autofocus: false,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search_rounded),
                         hintText: 'Buscar',
-                        border: OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         isDense: true,
                       ),
                       onChanged: (value) =>
@@ -79,8 +85,23 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
                                 e.name.toLowerCase().contains(_query))
                             .toList(growable: false);
                     if (filtered.isEmpty) {
-                      return const Center(
-                        child: Text('No hay ejercicios que coincidan'),
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 40,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No hay ejercicios que coincidan',
+                              style:
+                                  TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
                       );
                     }
                     return ListView.builder(
@@ -89,7 +110,11 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
                       itemBuilder: (context, index) {
                         final exercise = filtered[index];
                         return ListTile(
-                          title: Text(exercise.name),
+                          title: Text(
+                            exercise.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600),
+                          ),
                           subtitle: Text(
                             exercise.primaryMuscles
                                 .map((m) => m.displayName)
@@ -99,7 +124,12 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
                               ? null
                               : Text(
                                   exercise.equipment!,
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
                                 ),
                           onTap: () => Navigator.of(context).pop(exercise),
                         );
