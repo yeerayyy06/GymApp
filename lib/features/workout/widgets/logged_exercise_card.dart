@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/providers/settings_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
 import '../providers/workout_providers.dart';
@@ -42,7 +43,13 @@ class LoggedExerciseCard extends ConsumerWidget {
           isWarmup: result.isWarmup,
         );
     if (!result.isWarmup) {
-      ref.read(restTimerProvider.notifier).start();
+      final settings = ref.read(settingsProvider);
+      final restSeconds = settings.restSecondsFor(entry.exercise.id);
+      ref.read(restTimerProvider.notifier).start(
+            duration: Duration(seconds: restSeconds),
+            exerciseId: entry.exercise.id,
+            exerciseName: entry.exercise.name,
+          );
     }
   }
 

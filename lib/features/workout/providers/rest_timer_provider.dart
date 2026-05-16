@@ -5,17 +5,28 @@ class RestTimerConfig {
     required this.startedAt,
     required this.endsAt,
     required this.totalSeconds,
+    this.exerciseId,
+    this.exerciseName,
   });
 
   final DateTime startedAt;
   final DateTime endsAt;
   final int totalSeconds;
+  final String? exerciseId;
+  final String? exerciseName;
 
-  RestTimerConfig copyWith({DateTime? endsAt, int? totalSeconds}) {
+  RestTimerConfig copyWith({
+    DateTime? endsAt,
+    int? totalSeconds,
+    String? exerciseId,
+    String? exerciseName,
+  }) {
     return RestTimerConfig(
       startedAt: startedAt,
       endsAt: endsAt ?? this.endsAt,
       totalSeconds: totalSeconds ?? this.totalSeconds,
+      exerciseId: exerciseId ?? this.exerciseId,
+      exerciseName: exerciseName ?? this.exerciseName,
     );
   }
 }
@@ -25,12 +36,18 @@ class RestTimerNotifier extends StateNotifier<RestTimerConfig?> {
 
   static const Duration defaultDuration = Duration(seconds: 90);
 
-  void start([Duration duration = defaultDuration]) {
+  void start({
+    Duration duration = defaultDuration,
+    String? exerciseId,
+    String? exerciseName,
+  }) {
     final now = DateTime.now();
     state = RestTimerConfig(
       startedAt: now,
       endsAt: now.add(duration),
       totalSeconds: duration.inSeconds,
+      exerciseId: exerciseId,
+      exerciseName: exerciseName,
     );
   }
 

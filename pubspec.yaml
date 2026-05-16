@@ -30,6 +30,12 @@ dependencies:
   # Charts
   fl_chart: ^0.69.0
 
+  # Typography (Inter — cerca a SF Pro Display)
+  google_fonts: ^6.2.1
+
+  # Persistencia de preferencias
+  shared_preferences: ^2.3.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

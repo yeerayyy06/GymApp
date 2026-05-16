@@ -7,6 +7,7 @@ import '../../features/history/session_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/routines/routine_edit_screen.dart';
 import '../../features/routines/routines_screen.dart';
+import '../../features/settings/settings_screen.dart';
 import '../../features/workout/workout_screen.dart';
 import '../../shared/main_layout.dart';
 
@@ -81,6 +82,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

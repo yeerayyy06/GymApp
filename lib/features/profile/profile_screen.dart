@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
@@ -26,13 +27,14 @@ class ProfileScreen extends ConsumerWidget {
     final entriesAsync = ref.watch(bodyweightEntriesProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Perfil',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
+        title: const Text('Perfil'),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/profile/settings'),
           ),
-        ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addEntry(context, ref),

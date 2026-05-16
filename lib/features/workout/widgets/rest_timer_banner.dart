@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/settings_providers.dart';
 import '../providers/rest_timer_provider.dart';
 
 class RestTimerBanner extends ConsumerStatefulWidget {
@@ -110,16 +111,26 @@ class _RestTimerBannerState extends ConsumerState<RestTimerBanner> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isFinished ? '¡Listo!' : 'Descanso',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
-                            ?.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              config.exerciseName == null
+                                  ? (isFinished ? '¡Listo!' : 'Descanso')
+                                  : '${isFinished ? "Listo · " : "Descanso · "}${config.exerciseName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
                             ),
+                          ),
+                        ],
                       ),
                       Text(
                         _formatRemaining(shownRemaining),
@@ -154,13 +165,57 @@ class _RestTimerBannerState extends ConsumerState<RestTimerBanner> {
                   color: color,
                 ),
                 const SizedBox(width: 4),
-                IconButton(
-                  tooltip: 'Saltar',
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () =>
-                      ref.read(restTimerProvider.notifier).skip(),
-                  color: color,
-                  visualDensity: VisualDensity.compact,
+                PopupMenuButton<String>(
+                  tooltip: 'Más',
+                  icon: Icon(Icons.more_vert_rounded, color: color),
+                  onSelected: (value) async {
+                    switch (value) {
+                      case 'save_default':
+                        if (config.exerciseId == null) return;
+                        await ref
+                            .read(settingsProvider.notifier)
+                            .setExerciseRestSeconds(
+                              config.exerciseId!,
+                              config.totalSeconds,
+                            );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Descanso de ${config.totalSeconds}s guardado para ${config.exerciseName}',
+                            ),
+                          ),
+                        );
+                      case 'skip':
+                        ref.read(restTimerProvider.notifier).skip();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (config.exerciseId != null)
+                      PopupMenuItem(
+                        value: 'save_default',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.bookmark_add_outlined),
+                          title: Text(
+                            'Guardar ${config.totalSeconds}s como default',
+                          ),
+                          subtitle: config.exerciseName == null
+                              ? null
+                              : Text('Para ${config.exerciseName}'),
+                        ),
+                      ),
+                    const PopupMenuItem(
+                      value: 'skip',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.skip_next_rounded),
+                        title: Text('Saltar'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
