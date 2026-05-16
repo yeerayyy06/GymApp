@@ -6,6 +6,7 @@ import '../../core/domain/muscle_group.dart';
 import '../../core/providers/clock_provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
+import '../../shared/widgets/line_chart_card.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
 import 'widgets/pr_badge.dart';
@@ -121,6 +122,19 @@ class _ExerciseHistoryBody extends ConsumerWidget {
           child: _PRsCard(prs: history.prs, totalSets: history.totalSets),
         ),
 
+        // ── Progression chart ──
+        SliverToBoxAdapter(
+          child: LineChartCard(
+            title: '1RM estimado',
+            icon: Icons.trending_up_rounded,
+            points: _build1RMPoints(history.entries),
+            unit: ' kg',
+            daysWindow: 180,
+            emptyMessage:
+                'Registra al menos 2 sesiones con series de trabajo para ver la evolución',
+          ),
+        ),
+
         // ── Session entries ──
         if (history.entries.isEmpty)
           const SliverFillRemaining(
@@ -161,6 +175,23 @@ class _ExerciseHistoryBody extends ConsumerWidget {
       ],
     );
   }
+}
+
+List<ChartPoint> _build1RMPoints(List<ExerciseSessionEntry> entries) {
+  final points = <ChartPoint>[];
+  for (final entry in entries) {
+    double best = 0;
+    for (final set in entry.sets) {
+      if (set.isWarmup) continue;
+      final est =
+          estimatedOneRepMax(weightKg: set.weightKg, reps: set.reps);
+      if (est > best) best = est;
+    }
+    if (best > 0) {
+      points.add(ChartPoint(time: entry.session.startedAt, value: best));
+    }
+  }
+  return points;
 }
 
 class _PRsCard extends StatelessWidget {

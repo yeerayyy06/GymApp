@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
 import '../../core/utils/formatters.dart';
+import '../../shared/widgets/line_chart_card.dart';
 import '../history/providers/history_providers.dart';
 import 'providers/profile_providers.dart';
 import 'widgets/bodyweight_form_dialog.dart';
@@ -61,10 +62,21 @@ class _ProfileBody extends ConsumerWidget {
     final delta =
         latest != null && previous != null ? latest.weightKg - previous.weightKg : null;
 
+    final chartPoints = entries
+        .map((e) => ChartPoint(time: e.measuredAt, value: e.weightKg))
+        .toList(growable: false);
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
       children: [
         _BodyweightHeader(latest: latest, delta: delta, now: now),
+        LineChartCard(
+          title: 'Evolución del peso',
+          icon: Icons.show_chart_rounded,
+          points: chartPoints,
+          unit: ' kg',
+          daysWindow: 90,
+        ),
         const _TrainingSummaryCard(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
