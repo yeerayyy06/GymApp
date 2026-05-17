@@ -61,6 +61,10 @@ final exerciseHistoryProvider =
   return ref.watch(historyRepositoryProvider).watchExerciseHistory(exerciseId);
 });
 
+final recentPRsProvider = StreamProvider<List<PrEvent>>((ref) {
+  return ref.watch(historyRepositoryProvider).watchRecentPRs(limit: 10);
+});
+
 /// Mapa fecha (startOfDay) → volumen total acumulado de todas las
 /// sesiones completadas ese día. Calculado a partir de
 /// sessionSummariesProvider.
@@ -74,6 +78,27 @@ final dailyVolumeProvider =
       byDay[day] = (byDay[day] ?? 0) + s.totalVolumeKg;
     }
     return byDay;
+  });
+});
+
+/// Volumen agregado por semana (últimas 8 semanas, lunes-domingo).
+final weeklyVolumeProvider =
+    Provider<AsyncValue<List<({DateTime weekStart, double volume})>>>((ref) {
+  final asyncSums = ref.watch(sessionSummariesProvider);
+  final now = ref.watch(clockProvider)();
+  return asyncSums.whenData((sums) {
+    final thisWeekStart = startOfWeek(now);
+    final weeks = List.generate(8, (i) {
+      return thisWeekStart.subtract(Duration(days: 7 * (7 - i)));
+    });
+    final byWeek = <DateTime, double>{};
+    for (final s in sums) {
+      final w = startOfWeek(s.session.startedAt);
+      byWeek[w] = (byWeek[w] ?? 0) + s.totalVolumeKg;
+    }
+    return weeks
+        .map((w) => (weekStart: w, volume: byWeek[w] ?? 0.0))
+        .toList(growable: false);
   });
 });
 

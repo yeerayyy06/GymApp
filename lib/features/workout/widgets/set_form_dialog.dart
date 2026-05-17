@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/settings_providers.dart';
+import '../../../core/utils/weight_format.dart';
 import 'plate_calculator_dialog.dart';
 
 class SetFormResult {
@@ -17,7 +20,7 @@ class SetFormResult {
   final bool isWarmup;
 }
 
-class SetFormDialog extends StatefulWidget {
+class SetFormDialog extends ConsumerStatefulWidget {
   const SetFormDialog({
     super.key,
     required this.exerciseName,
@@ -62,10 +65,10 @@ class SetFormDialog extends StatefulWidget {
   }
 
   @override
-  State<SetFormDialog> createState() => _SetFormDialogState();
+  ConsumerState<SetFormDialog> createState() => _SetFormDialogState();
 }
 
-class _SetFormDialogState extends State<SetFormDialog> {
+class _SetFormDialogState extends ConsumerState<SetFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _weightController;
   late final TextEditingController _repsController;
@@ -75,8 +78,11 @@ class _SetFormDialogState extends State<SetFormDialog> {
   @override
   void initState() {
     super.initState();
+    final unit = ref.read(settingsProvider).weightUnit;
     _weightController = TextEditingController(
-      text: widget.initialWeightKg?.toString() ?? '',
+      text: widget.initialWeightKg == null
+          ? ''
+          : formatWeight(widget.initialWeightKg!, unit, includeUnit: false),
     );
     _repsController = TextEditingController(
       text: widget.initialReps?.toString() ?? '',
@@ -98,14 +104,16 @@ class _SetFormDialogState extends State<SetFormDialog> {
   void _submit() {
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
-    final weight = double.parse(_weightController.text.replaceAll(',', '.'));
+    final unit = ref.read(settingsProvider).weightUnit;
+    final entered = double.parse(_weightController.text.replaceAll(',', '.'));
+    final weightKg = unit.toKg(entered);
     final reps = int.parse(_repsController.text);
     final rpeText = _rpeController.text.trim();
     final rpe =
         rpeText.isEmpty ? null : double.parse(rpeText.replaceAll(',', '.'));
     Navigator.of(context).pop(
       SetFormResult(
-        weightKg: weight,
+        weightKg: weightKg,
         reps: reps,
         rpe: rpe,
         isWarmup: _isWarmup,
@@ -114,6 +122,7 @@ class _SetFormDialogState extends State<SetFormDialog> {
   }
 
   void _showPlateCalculator() {
+    final unit = ref.read(settingsProvider).weightUnit;
     final parsed = double.tryParse(
       _weightController.text.replaceAll(',', '.'),
     );
@@ -125,11 +134,15 @@ class _SetFormDialogState extends State<SetFormDialog> {
       );
       return;
     }
-    PlateCalculatorDialog.show(context, targetWeightKg: parsed);
+    PlateCalculatorDialog.show(
+      context,
+      targetWeightKg: unit.toKg(parsed),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final unit = ref.watch(settingsProvider).weightUnit;
     final String title;
     if (widget.isEditing) {
       title = 'Editar serie · ${widget.exerciseName}';
@@ -153,9 +166,9 @@ class _SetFormDialogState extends State<SetFormDialog> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
               ],
-              decoration: const InputDecoration(
-                labelText: 'Peso (kg)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Peso (${unit.label})',
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {

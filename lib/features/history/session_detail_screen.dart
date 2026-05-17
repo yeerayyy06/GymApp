@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
+import '../../core/utils/weight_format.dart';
 import '../workout/providers/workout_providers.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
@@ -362,7 +364,7 @@ class _ExerciseSection extends StatelessWidget {
   }
 }
 
-class _SetRow extends StatelessWidget {
+class _SetRow extends ConsumerWidget {
   const _SetRow({
     required this.label,
     required this.set,
@@ -374,8 +376,9 @@ class _SetRow extends StatelessWidget {
   final ExercisePRs? prs;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final unit = ref.watch(settingsProvider).weightUnit;
     final est1RM = estimatedOneRepMax(weightKg: set.weightKg, reps: set.reps);
     final isWeightPR = !set.isWarmup &&
         prs != null &&
@@ -422,7 +425,7 @@ class _SetRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '${formatWeightKg(set.weightKg)}  ×  ${set.reps}'
+              '${formatWeight(set.weightKg, unit)}  ×  ${set.reps}'
               '${set.rpe == null ? '' : '  ·  RPE ${set.rpe}'}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

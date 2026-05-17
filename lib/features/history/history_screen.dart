@@ -5,8 +5,10 @@ import '../../core/utils/formatters.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'providers/history_providers.dart';
 import 'widgets/history_calendar.dart';
+import 'widgets/recent_prs_card.dart';
 import 'widgets/session_card.dart';
 import 'widgets/stats_summary_card.dart';
+import 'widgets/weekly_volume_card.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -51,6 +53,8 @@ class HistoryScreen extends ConsumerWidget {
                   child: _SelectedDayBanner(day: selectedDay),
                 ),
               const SliverToBoxAdapter(child: StatsSummaryCard()),
+              const SliverToBoxAdapter(child: RecentPRsCard()),
+              const SliverToBoxAdapter(child: WeeklyVolumeCard()),
               if (filtered.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,

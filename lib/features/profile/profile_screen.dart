@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
+import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/line_chart_card.dart';
 import '../history/providers/history_providers.dart';
 import 'providers/profile_providers.dart';
@@ -62,6 +64,7 @@ class _ProfileBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(clockProvider)();
+    final unit = ref.watch(settingsProvider).weightUnit;
     final scheme = Theme.of(context).colorScheme;
     final latest = entries.isEmpty ? null : entries.first;
     final previous = entries.length >= 2 ? entries[1] : null;
@@ -75,7 +78,7 @@ class _ProfileBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
       children: [
-        _BodyweightHeader(latest: latest, delta: delta, now: now),
+        _BodyweightHeader(latest: latest, delta: delta, now: now, unit: unit),
         const StreakCard(),
         const _TrainingSummaryCard(),
         const ActivityHeatmapCard(),
@@ -121,7 +124,7 @@ class _ProfileBody extends ConsumerWidget {
           )
         else
           ...entries.map(
-            (entry) => _BodyweightTile(entry: entry, now: now),
+            (entry) => _BodyweightTile(entry: entry, now: now, unit: unit),
           ),
       ],
     );
@@ -133,11 +136,13 @@ class _BodyweightHeader extends StatelessWidget {
     required this.latest,
     required this.delta,
     required this.now,
+    required this.unit,
   });
 
   final BodyweightEntryRow? latest;
   final double? delta;
   final DateTime now;
+  final WeightUnit unit;
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +199,7 @@ class _BodyweightHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  formatWeightKg(latest!.weightKg),
+                  formatWeight(latest!.weightKg, unit),
                   style:
                       Theme.of(context).textTheme.displaySmall?.copyWith(
                             fontWeight: FontWeight.w800,
@@ -205,7 +210,7 @@ class _BodyweightHeader extends StatelessWidget {
                 if (delta != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _DeltaChip(delta: delta!),
+                    child: _DeltaChip(delta: delta!, unit: unit),
                   ),
               ],
             ),
@@ -224,9 +229,10 @@ class _BodyweightHeader extends StatelessWidget {
 }
 
 class _DeltaChip extends StatelessWidget {
-  const _DeltaChip({required this.delta});
+  const _DeltaChip({required this.delta, required this.unit});
 
   final double delta;
+  final WeightUnit unit;
 
   @override
   Widget build(BuildContext context) {
@@ -241,9 +247,10 @@ class _DeltaChip extends StatelessWidget {
         : (isPositive
             ? Icons.arrow_upward_rounded
             : Icons.arrow_downward_rounded);
+    final shownDelta = unit.fromKg(delta);
     final text = isZero
-        ? '0 kg'
-        : '${isPositive ? '+' : '−'}${delta.abs().toStringAsFixed(1)} kg';
+        ? '0 ${unit.label}'
+        : '${isPositive ? '+' : '−'}${shownDelta.abs().toStringAsFixed(1)} ${unit.label}';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -387,10 +394,15 @@ class _SummaryBlock extends StatelessWidget {
 }
 
 class _BodyweightTile extends ConsumerWidget {
-  const _BodyweightTile({required this.entry, required this.now});
+  const _BodyweightTile({
+    required this.entry,
+    required this.now,
+    required this.unit,
+  });
 
   final BodyweightEntryRow entry;
   final DateTime now;
+  final WeightUnit unit;
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
     final result = await BodyweightFormDialog.show(
@@ -452,7 +464,7 @@ class _BodyweightTile extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          formatWeightKg(entry.weightKg),
+                          formatWeight(entry.weightKg, unit),
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium

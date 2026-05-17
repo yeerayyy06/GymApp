@@ -120,3 +120,23 @@ class ExerciseHistory {
   final ExercisePRs? prs;
   final int totalSets;
 }
+
+class PrEvent {
+  const PrEvent({
+    required this.when,
+    required this.exercise,
+    required this.weightKg,
+    required this.reps,
+    required this.est1RM,
+    required this.isWeightPR,
+    required this.is1RMPR,
+  });
+
+  final DateTime when;
+  final ExerciseRow exercise;
+  final double weightKg;
+  final int reps;
+  final double est1RM;
+  final bool isWeightPR;
+  final bool is1RMPR;
+}

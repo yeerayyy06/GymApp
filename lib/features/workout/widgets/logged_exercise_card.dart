@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/providers/settings_providers.dart';
 import '../../../core/utils/one_rep_max.dart';
+import '../../../core/utils/weight_format.dart';
 import '../../history/providers/history_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
@@ -289,6 +290,7 @@ class _PreviousPerformance extends ConsumerWidget {
     final asyncPrev = ref.watch(previousExerciseSetsProvider(
       (exerciseId: exerciseId, excludingSessionId: currentSessionId),
     ));
+    final unit = ref.watch(settingsProvider).weightUnit;
     final scheme = Theme.of(context).colorScheme;
     return asyncPrev.when(
       loading: () => const SizedBox.shrink(),
@@ -301,7 +303,7 @@ class _PreviousPerformance extends ConsumerWidget {
         final topSet = workingSets
             .reduce((a, b) => (a.weightKg * a.reps) >= (b.weightKg * b.reps) ? a : b);
         final summary =
-            '${workingSets.length}×${topSet.reps} · ${_fmtWeight(topSet.weightKg)} kg';
+            '${workingSets.length}×${topSet.reps} · ${formatWeight(topSet.weightKg, unit)}';
         final daysAgo = DateTime.now().difference(prev.sessionStartedAt).inDays;
         final whenLabel = daysAgo == 0
             ? 'hoy'
@@ -340,13 +342,9 @@ class _PreviousPerformance extends ConsumerWidget {
     );
   }
 
-  String _fmtWeight(double v) {
-    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
-    return v.toStringAsFixed(1);
-  }
 }
 
-class _SetTile extends StatelessWidget {
+class _SetTile extends ConsumerWidget {
   const _SetTile({
     required this.label,
     required this.set,
@@ -359,14 +357,10 @@ class _SetTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  String _formatWeight(double value) {
-    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
-    return value.toString();
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final unit = ref.watch(settingsProvider).weightUnit;
     final rpeText = set.rpe == null ? '' : '  ·  RPE ${set.rpe}';
     return Dismissible(
       key: ValueKey(set.id),
@@ -422,7 +416,7 @@ class _SetTile extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${_formatWeight(set.weightKg)} kg  ×  ${set.reps}$rpeText',
+                  '${formatWeight(set.weightKg, unit)}  ×  ${set.reps}$rpeText',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),

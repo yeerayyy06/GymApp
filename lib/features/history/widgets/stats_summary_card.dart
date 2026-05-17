@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/formatters.dart';
+import '../../../core/providers/settings_providers.dart';
+import '../../../core/utils/weight_format.dart';
 import '../../../shared/widgets/app_gradients.dart';
 import '../../../shared/widgets/bento_tile.dart';
 import '../providers/history_providers.dart';
@@ -12,6 +13,7 @@ class StatsSummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(historyStatsProvider);
+    final unit = ref.watch(settingsProvider).weightUnit;
     final scheme = Theme.of(context).colorScheme;
 
     return statsAsync.when(
@@ -67,7 +69,7 @@ class StatsSummaryCard extends ConsumerWidget {
                 children: [
                   _SmallStat(
                     icon: Icons.fitness_center_rounded,
-                    value: formatVolume(stats.totalVolumeKg),
+                    value: formatVolumeInUnit(stats.totalVolumeKg, unit),
                     label: 'Volumen total',
                     color: scheme.primary,
                   ),

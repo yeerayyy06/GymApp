@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/settings_providers.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/weight_format.dart';
 
 class BodyweightFormResult {
   const BodyweightFormResult({
@@ -13,7 +16,7 @@ class BodyweightFormResult {
   final DateTime measuredAt;
 }
 
-class BodyweightFormDialog extends StatefulWidget {
+class BodyweightFormDialog extends ConsumerStatefulWidget {
   const BodyweightFormDialog({
     super.key,
     this.initialWeightKg,
@@ -42,10 +45,11 @@ class BodyweightFormDialog extends StatefulWidget {
   }
 
   @override
-  State<BodyweightFormDialog> createState() => _BodyweightFormDialogState();
+  ConsumerState<BodyweightFormDialog> createState() =>
+      _BodyweightFormDialogState();
 }
 
-class _BodyweightFormDialogState extends State<BodyweightFormDialog> {
+class _BodyweightFormDialogState extends ConsumerState<BodyweightFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _weightController;
   late DateTime _measuredAt;
@@ -53,8 +57,11 @@ class _BodyweightFormDialogState extends State<BodyweightFormDialog> {
   @override
   void initState() {
     super.initState();
+    final unit = ref.read(settingsProvider).weightUnit;
     _weightController = TextEditingController(
-      text: widget.initialWeightKg?.toString() ?? '',
+      text: widget.initialWeightKg == null
+          ? ''
+          : formatWeight(widget.initialWeightKg!, unit, includeUnit: false),
     );
     _measuredAt = widget.initialMeasuredAt ?? DateTime.now();
   }
@@ -87,14 +94,19 @@ class _BodyweightFormDialogState extends State<BodyweightFormDialog> {
   void _submit() {
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
-    final weight = double.parse(_weightController.text.replaceAll(',', '.'));
+    final unit = ref.read(settingsProvider).weightUnit;
+    final entered =
+        double.parse(_weightController.text.replaceAll(',', '.'));
+    final weightKg = unit.toKg(entered);
     Navigator.of(context).pop(
-      BodyweightFormResult(weightKg: weight, measuredAt: _measuredAt),
+      BodyweightFormResult(weightKg: weightKg, measuredAt: _measuredAt),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final unit = ref.watch(settingsProvider).weightUnit;
+    final maxValue = unit.fromKg(500);
     return AlertDialog(
       title: Text(widget.isEditing ? 'Editar peso' : 'Registrar peso'),
       content: Form(
@@ -110,9 +122,9 @@ class _BodyweightFormDialogState extends State<BodyweightFormDialog> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
               ],
-              decoration: const InputDecoration(
-                labelText: 'Peso corporal (kg)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Peso corporal (${unit.label})',
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -120,7 +132,7 @@ class _BodyweightFormDialogState extends State<BodyweightFormDialog> {
                 }
                 final parsed = double.tryParse(value.replaceAll(',', '.'));
                 if (parsed == null || parsed <= 0) return 'Peso inválido';
-                if (parsed > 500) return 'Demasiado alto';
+                if (parsed > maxValue) return 'Demasiado alto';
                 return null;
               },
             ),

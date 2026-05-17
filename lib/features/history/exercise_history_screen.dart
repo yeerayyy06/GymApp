@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/database/app_database.dart';
 import '../../core/domain/muscle_group.dart';
 import '../../core/providers/clock_provider.dart';
+import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
+import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/line_chart_card.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
@@ -194,15 +196,16 @@ List<ChartPoint> _build1RMPoints(List<ExerciseSessionEntry> entries) {
   return points;
 }
 
-class _PRsCard extends StatelessWidget {
+class _PRsCard extends ConsumerWidget {
   const _PRsCard({required this.prs, required this.totalSets});
 
   final ExercisePRs? prs;
   final int totalSets;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final unit = ref.watch(settingsProvider).weightUnit;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -244,17 +247,17 @@ class _PRsCard extends StatelessWidget {
                 children: [
                   _PRStat(
                     label: 'Peso máx',
-                    value: formatWeightKg(prs!.bestWeightKg),
+                    value: formatWeight(prs!.bestWeightKg, unit),
                     color: scheme.primary,
                   ),
                   _PRStat(
                     label: '1RM est.',
-                    value: formatWeightKg(prs!.bestEst1RMKg),
+                    value: formatWeight(prs!.bestEst1RMKg, unit),
                     color: scheme.secondary,
                   ),
                   _PRStat(
                     label: 'Vol. serie',
-                    value: formatVolume(prs!.bestVolumeSetKg),
+                    value: formatVolumeInUnit(prs!.bestVolumeSetKg, unit),
                     color: scheme.tertiary,
                   ),
                 ],
@@ -380,7 +383,7 @@ class _SessionEntry extends StatelessWidget {
   }
 }
 
-class _ExerciseHistorySetRow extends StatelessWidget {
+class _ExerciseHistorySetRow extends ConsumerWidget {
   const _ExerciseHistorySetRow({
     required this.label,
     required this.set,
@@ -392,8 +395,9 @@ class _ExerciseHistorySetRow extends StatelessWidget {
   final ExercisePRs? prs;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final unit = ref.watch(settingsProvider).weightUnit;
     final est1RM = estimatedOneRepMax(weightKg: set.weightKg, reps: set.reps);
     final isWeightPR = !set.isWarmup &&
         prs != null &&
@@ -438,7 +442,7 @@ class _ExerciseHistorySetRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '${formatWeightKg(set.weightKg)}  ×  ${set.reps}'
+              '${formatWeight(set.weightKg, unit)}  ×  ${set.reps}'
               '${set.rpe == null ? '' : '  ·  RPE ${set.rpe}'}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

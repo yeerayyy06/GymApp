@@ -404,6 +404,77 @@ class HistoryRepository {
     return (sessionStartedAt: session.startedAt, sets: sets);
   }
 
+  Stream<List<PrEvent>> watchRecentPRs({int limit = 10}) {
+    final sessions = _db.workoutSessions;
+    final loggedExercises = _db.loggedExercises;
+    final loggedSets = _db.loggedSets;
+    final exercises = _db.exercises;
+
+    final query = _db.select(loggedSets).join([
+      innerJoin(
+        loggedExercises,
+        loggedExercises.id.equalsExp(loggedSets.loggedExerciseId),
+      ),
+      innerJoin(
+        sessions,
+        sessions.id.equalsExp(loggedExercises.sessionId),
+      ),
+      innerJoin(
+        exercises,
+        exercises.id.equalsExp(loggedExercises.exerciseId),
+      ),
+    ])
+      ..where(
+        loggedSets.deletedAt.isNull() &
+            loggedExercises.deletedAt.isNull() &
+            sessions.deletedAt.isNull() &
+            sessions.endedAt.isNotNull() &
+            loggedSets.isWarmup.equals(false),
+      )
+      ..orderBy([
+        OrderingTerm.asc(sessions.startedAt),
+        OrderingTerm.asc(loggedSets.setNumber),
+      ]);
+
+    return query.watch().map((rows) {
+      final events = <PrEvent>[];
+      final bestWeight = <String, double>{};
+      final best1RM = <String, double>{};
+      for (final row in rows) {
+        final set = row.readTable(loggedSets);
+        final logged = row.readTable(loggedExercises);
+        final session = row.readTable(sessions);
+        final exercise = row.readTable(exercises);
+        final est = estimatedOneRepMax(
+          weightKg: set.weightKg,
+          reps: set.reps,
+        );
+        final prevW = bestWeight[logged.exerciseId] ?? 0;
+        final prev1 = best1RM[logged.exerciseId] ?? 0;
+        final isWeightPR = set.weightKg > prevW + 0.001;
+        final is1RMPR = est > prev1 + 0.001;
+        if (isWeightPR || is1RMPR) {
+          events.add(PrEvent(
+            when: session.startedAt,
+            exercise: exercise,
+            weightKg: set.weightKg,
+            reps: set.reps,
+            est1RM: est,
+            isWeightPR: isWeightPR,
+            is1RMPR: is1RMPR,
+          ));
+        }
+        if (isWeightPR) bestWeight[logged.exerciseId] = set.weightKg;
+        if (is1RMPR) best1RM[logged.exerciseId] = est;
+      }
+      events.sort((a, b) => b.when.compareTo(a.when));
+      if (events.length > limit) {
+        return events.sublist(0, limit);
+      }
+      return events;
+    });
+  }
+
   Future<void> deleteSession(String sessionId) async {
     final now = _clock();
     await (_db.update(_db.workoutSessions)
