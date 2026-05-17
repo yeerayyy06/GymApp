@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/providers/settings_providers.dart';
+import '../../history/providers/history_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
 import '../providers/workout_providers.dart';
@@ -184,6 +185,10 @@ class LoggedExerciseCard extends ConsumerWidget {
               ],
             ),
           ),
+          _PreviousPerformance(
+            exerciseId: entry.exercise.id,
+            currentSessionId: entry.logged.sessionId,
+          ),
           setsAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(16),
@@ -238,6 +243,77 @@ class LoggedExerciseCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+class _PreviousPerformance extends ConsumerWidget {
+  const _PreviousPerformance({
+    required this.exerciseId,
+    required this.currentSessionId,
+  });
+
+  final String exerciseId;
+  final String currentSessionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncPrev = ref.watch(previousExerciseSetsProvider(
+      (exerciseId: exerciseId, excludingSessionId: currentSessionId),
+    ));
+    final scheme = Theme.of(context).colorScheme;
+    return asyncPrev.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (prev) {
+        if (prev == null) return const SizedBox.shrink();
+        final workingSets =
+            prev.sets.where((s) => !s.isWarmup).toList(growable: false);
+        if (workingSets.isEmpty) return const SizedBox.shrink();
+        final topSet = workingSets
+            .reduce((a, b) => (a.weightKg * a.reps) >= (b.weightKg * b.reps) ? a : b);
+        final summary =
+            '${workingSets.length}×${topSet.reps} · ${_fmtWeight(topSet.weightKg)} kg';
+        final daysAgo = DateTime.now().difference(prev.sessionStartedAt).inDays;
+        final whenLabel = daysAgo == 0
+            ? 'hoy'
+            : daysAgo == 1
+                ? 'ayer'
+                : 'hace ${daysAgo}d';
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: scheme.surfaceContainerHighest,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.history_rounded,
+                    size: 12, color: scheme.onSurfaceVariant),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Última ($whenLabel): $summary',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _fmtWeight(double v) {
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(1);
   }
 }
 

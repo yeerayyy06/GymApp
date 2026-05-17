@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/domain/muscle_group.dart';
 import '../../../core/providers/clock_provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/one_rep_max.dart';
@@ -320,6 +321,87 @@ class HistoryRepository {
         totalSets: totalSets,
       );
     });
+  }
+
+  Stream<Map<MuscleGroup, double>> watchVolumeByMuscleGroup({int days = 7}) {
+    final sessions = _db.workoutSessions;
+    final loggedExercises = _db.loggedExercises;
+    final loggedSets = _db.loggedSets;
+    final exercises = _db.exercises;
+
+    final cutoff = _clock().subtract(Duration(days: days));
+
+    final query = _db.select(loggedSets).join([
+      innerJoin(
+        loggedExercises,
+        loggedExercises.id.equalsExp(loggedSets.loggedExerciseId),
+      ),
+      innerJoin(
+        sessions,
+        sessions.id.equalsExp(loggedExercises.sessionId),
+      ),
+      innerJoin(
+        exercises,
+        exercises.id.equalsExp(loggedExercises.exerciseId),
+      ),
+    ])
+      ..where(
+        loggedSets.deletedAt.isNull() &
+            loggedExercises.deletedAt.isNull() &
+            sessions.deletedAt.isNull() &
+            loggedSets.isWarmup.equals(false) &
+            sessions.startedAt.isBiggerThanValue(cutoff),
+      );
+
+    return query.watch().map((rows) {
+      final result = <MuscleGroup, double>{};
+      for (final row in rows) {
+        final set = row.readTable(loggedSets);
+        final exercise = row.readTable(exercises);
+        final volume = set.weightKg * set.reps;
+        for (final muscle in exercise.primaryMuscles) {
+          result[muscle] = (result[muscle] ?? 0) + volume;
+        }
+      }
+      return result;
+    });
+  }
+
+  /// Sets de la última sesión (completada) anterior a [excludingSessionId]
+  /// para [exerciseId]. Devuelve null si no hay sesión previa.
+  Future<({DateTime sessionStartedAt, List<LoggedSetRow> sets})?>
+      getPreviousExerciseSets({
+    required String exerciseId,
+    String? excludingSessionId,
+  }) async {
+    final sessions = _db.workoutSessions;
+    final loggedExercises = _db.loggedExercises;
+    final loggedSets = _db.loggedSets;
+
+    final loggedQuery = _db.select(loggedExercises).join([
+      innerJoin(sessions, sessions.id.equalsExp(loggedExercises.sessionId)),
+    ])
+      ..where(loggedExercises.exerciseId.equals(exerciseId) &
+          loggedExercises.deletedAt.isNull() &
+          sessions.deletedAt.isNull() &
+          sessions.endedAt.isNotNull() &
+          (excludingSessionId == null
+              ? const Constant(true)
+              : sessions.id.equals(excludingSessionId).not()))
+      ..orderBy([OrderingTerm.desc(sessions.startedAt)])
+      ..limit(1);
+
+    final rows = await loggedQuery.get();
+    if (rows.isEmpty) return null;
+    final logged = rows.first.readTable(loggedExercises);
+    final session = rows.first.readTable(sessions);
+
+    final sets = await (_db.select(loggedSets)
+          ..where((t) =>
+              t.loggedExerciseId.equals(logged.id) & t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.asc(t.setNumber)]))
+        .get();
+    return (sessionStartedAt: session.startedAt, sets: sets);
   }
 
   Future<void> deleteSession(String sessionId) async {

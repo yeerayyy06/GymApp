@@ -9,6 +9,7 @@ import '../../shared/widgets/line_chart_card.dart';
 import '../history/providers/history_providers.dart';
 import 'providers/profile_providers.dart';
 import 'widgets/bodyweight_form_dialog.dart';
+import 'widgets/muscle_volume_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -80,6 +81,7 @@ class _ProfileBody extends ConsumerWidget {
           daysWindow: 90,
         ),
         const _TrainingSummaryCard(),
+        const MuscleVolumeCard(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
           child: Text(

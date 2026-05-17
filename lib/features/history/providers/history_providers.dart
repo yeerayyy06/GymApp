@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/app_database.dart';
+import '../../../core/domain/muscle_group.dart';
 import '../../../core/providers/clock_provider.dart';
 import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/formatters.dart';
@@ -57,4 +59,28 @@ final allTimePRsProvider =
 final exerciseHistoryProvider =
     StreamProvider.family<ExerciseHistory?, String>((ref, exerciseId) {
   return ref.watch(historyRepositoryProvider).watchExerciseHistory(exerciseId);
+});
+
+final muscleVolumeWindowProvider = StateProvider<int>((_) => 7);
+
+final volumeByMuscleProvider =
+    StreamProvider<Map<MuscleGroup, double>>((ref) {
+  final days = ref.watch(muscleVolumeWindowProvider);
+  return ref
+      .watch(historyRepositoryProvider)
+      .watchVolumeByMuscleGroup(days: days);
+});
+
+typedef PreviousExerciseResult = ({
+  DateTime sessionStartedAt,
+  List<LoggedSetRow> sets,
+})?;
+
+final previousExerciseSetsProvider = FutureProvider.family<
+    PreviousExerciseResult,
+    ({String exerciseId, String? excludingSessionId})>((ref, args) {
+  return ref.read(historyRepositoryProvider).getPreviousExerciseSets(
+        exerciseId: args.exerciseId,
+        excludingSessionId: args.excludingSessionId,
+      );
 });
