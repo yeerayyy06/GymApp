@@ -75,7 +75,15 @@ class _ProfileBody extends ConsumerWidget {
         .map((e) => ChartPoint(time: e.measuredAt, value: e.weightKg))
         .toList(growable: false);
 
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(bodyweightEntriesProvider);
+        ref.invalidate(sessionSummariesProvider);
+        ref.invalidate(volumeByMuscleProvider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 96),
       children: [
         _BodyweightHeader(latest: latest, delta: delta, now: now, unit: unit),
@@ -127,6 +135,7 @@ class _ProfileBody extends ConsumerWidget {
             (entry) => _BodyweightTile(entry: entry, now: now, unit: unit),
           ),
       ],
+      ),
     );
   }
 }

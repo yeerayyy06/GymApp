@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/muscle_color.dart';
 import '../../../core/domain/muscle_group.dart';
@@ -112,82 +113,91 @@ class _PrCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _primaryMuscle.brandColor;
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color,
-            Color.lerp(color, Colors.black, 0.35) ?? color,
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: () =>
+            context.push('/history/exercise/${event.exercise.id}'),
+        child: Container(
+          width: 200,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color,
+                Color.lerp(color, Colors.black, 0.35) ?? color,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: Colors.white.withValues(alpha: 0.22),
-                ),
-                child: Text(
-                  _kindLabel(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.white.withValues(alpha: 0.22),
+                    ),
+                    child: Text(
+                      _kindLabel(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.emoji_events_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ],
               ),
               const Spacer(),
-              const Icon(
-                Icons.emoji_events_rounded,
-                color: Colors.white,
-                size: 16,
+              Text(
+                event.exercise.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${formatWeight(event.weightKg, unit)} × ${event.reps}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _ago(),
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            event.exercise.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${formatWeight(event.weightKg, unit)} × ${event.reps}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            _ago(),
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

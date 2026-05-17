@@ -167,7 +167,15 @@ class _StartSessionView extends ConsumerWidget {
       orElse: () => null,
     );
 
-    return SingleChildScrollView(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(routinesProvider);
+        ref.invalidate(sessionSummariesProvider);
+        ref.invalidate(historyStatsProvider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -266,6 +274,7 @@ class _StartSessionView extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

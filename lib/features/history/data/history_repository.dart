@@ -59,6 +59,7 @@ class HistoryRepository {
         if (logged != null && exercise != null) {
           acc.exerciseOrder.putIfAbsent(logged.id, () => exercise.name);
           acc.loggedToName.putIfAbsent(logged.id, () => exercise.name);
+          acc.muscleGroups.addAll(exercise.primaryMuscles);
         }
         if (set != null && logged != null && acc.seenSetIds.add(set.id)) {
           acc.totalSets++;
@@ -513,6 +514,7 @@ class _SessionAcc {
   /// Maps loggedExerciseId → exercise name (to build summaries).
   final Map<String, String> loggedToName = {};
   final Set<String> seenSetIds = <String>{};
+  final Set<MuscleGroup> muscleGroups = <MuscleGroup>{};
   int totalSets = 0;
   double totalVolumeKg = 0;
 
@@ -535,6 +537,7 @@ class _SessionAcc {
       totalVolumeKg: totalVolumeKg,
       exerciseNames: names,
       exerciseSummaries: summaries,
+      muscleGroups: muscleGroups,
     );
   }
 }

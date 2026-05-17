@@ -45,8 +45,16 @@ class HistoryScreen extends ConsumerWidget {
             return const _EmptyHistoryView();
           }
           final filtered = filteredAsync.valueOrNull ?? allSummaries;
-          return CustomScrollView(
-            slivers: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(sessionSummariesProvider);
+              ref.invalidate(volumeByMuscleProvider);
+              ref.invalidate(recentPRsProvider);
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
               const SliverToBoxAdapter(child: HistoryCalendar()),
               if (selectedDay != null)
                 SliverToBoxAdapter(
@@ -107,8 +115,9 @@ class HistoryScreen extends ConsumerWidget {
                   ),
                 ),
               ],
-              const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
-            ],
+                const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
+              ],
+            ),
           );
         },
       ),

@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../../core/domain/muscle_group.dart';
 
 class ExerciseSummaryLine {
   const ExerciseSummaryLine({
@@ -19,6 +20,7 @@ class SessionSummary {
     required this.totalVolumeKg,
     required this.exerciseNames,
     this.exerciseSummaries = const [],
+    this.muscleGroups = const <MuscleGroup>{},
   });
 
   final WorkoutSessionRow session;
@@ -29,6 +31,8 @@ class SessionSummary {
   final List<String> exerciseNames;
   /// Exercise name + set count per exercise for rich card display.
   final List<ExerciseSummaryLine> exerciseSummaries;
+  /// Conjunto de grupos musculares trabajados en la sesión (primarios).
+  final Set<MuscleGroup> muscleGroups;
 }
 
 class SessionDetail {
