@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 import '../../features/history/exercise_history_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/history/session_detail_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/routines/routine_edit_screen.dart';
 import '../../features/routines/routines_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/workout/workout_screen.dart';
 import '../../shared/main_layout.dart';
+import '../providers/settings_providers.dart';
 
 abstract final class AppRoutes {
+  static const onboarding = '/onboarding';
   static const history = '/history';
   static const workout = '/workout';
   static const profile = '/profile';
@@ -23,7 +26,22 @@ abstract final class AppRoutes {
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.workout,
+    redirect: (context, state) {
+      final completed = ref.read(settingsProvider).hasCompletedOnboarding;
+      final goingToOnboarding = state.matchedLocation == AppRoutes.onboarding;
+      if (!completed && !goingToOnboarding) {
+        return AppRoutes.onboarding;
+      }
+      if (completed && goingToOnboarding) {
+        return AppRoutes.workout;
+      }
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainLayout(navigationShell: navigationShell),

@@ -9,11 +9,13 @@ class SettingsState {
     this.defaultRestSeconds = 90,
     this.exerciseRestSeconds = const <String, int>{},
     this.weightUnit = WeightUnit.kg,
+    this.hasCompletedOnboarding = false,
   });
 
   final int defaultRestSeconds;
   final Map<String, int> exerciseRestSeconds;
   final WeightUnit weightUnit;
+  final bool hasCompletedOnboarding;
 
   int restSecondsFor(String? exerciseId) {
     if (exerciseId == null) return defaultRestSeconds;
@@ -27,11 +29,14 @@ class SettingsState {
     int? defaultRestSeconds,
     Map<String, int>? exerciseRestSeconds,
     WeightUnit? weightUnit,
+    bool? hasCompletedOnboarding,
   }) {
     return SettingsState(
       defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
       exerciseRestSeconds: exerciseRestSeconds ?? this.exerciseRestSeconds,
       weightUnit: weightUnit ?? this.weightUnit,
+      hasCompletedOnboarding:
+          hasCompletedOnboarding ?? this.hasCompletedOnboarding,
     );
   }
 }
@@ -44,6 +49,7 @@ class SettingsService {
   static const _defaultRestKey = 'settings.defaultRestSeconds';
   static const _exerciseRestPrefix = 'settings.restForExercise.';
   static const _weightUnitKey = 'settings.weightUnit';
+  static const _onboardingKey = 'settings.hasCompletedOnboarding';
 
   SettingsState load() {
     final defaultRest = _prefs.getInt(_defaultRestKey) ?? 90;
@@ -65,7 +71,12 @@ class SettingsService {
       defaultRestSeconds: defaultRest,
       exerciseRestSeconds: perExercise,
       weightUnit: unit,
+      hasCompletedOnboarding: _prefs.getBool(_onboardingKey) ?? false,
     );
+  }
+
+  Future<void> saveOnboardingCompleted(bool value) async {
+    await _prefs.setBool(_onboardingKey, value);
   }
 
   Future<void> saveDefaultRestSeconds(int seconds) async {

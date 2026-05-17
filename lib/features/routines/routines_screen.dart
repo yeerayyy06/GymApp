@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../shared/widgets/skeleton.dart';
 import 'data/routine_models.dart';
 import 'providers/routine_providers.dart';
 
@@ -27,7 +28,10 @@ class RoutinesScreen extends ConsumerWidget {
         label: const Text('Nueva rutina'),
       ),
       body: routinesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.fromLTRB(12, 16, 12, 0),
+          child: SkeletonList(itemCount: 4, itemHeight: 100),
+        ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (routines) {
           if (routines.isEmpty) {

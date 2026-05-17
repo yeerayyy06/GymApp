@@ -36,6 +36,12 @@ dependencies:
   # Persistencia de preferencias
   shared_preferences: ^2.3.4
 
+  # Animación de PR
+  confetti: ^0.7.0
+
+  # Skeleton loaders
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

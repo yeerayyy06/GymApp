@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/providers/settings_providers.dart';
+import '../../../core/utils/one_rep_max.dart';
 import '../../history/providers/history_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
 import '../providers/workout_providers.dart';
+import 'pr_celebration.dart';
 import 'set_form_dialog.dart';
 
 class LoggedExerciseCard extends ConsumerWidget {
@@ -36,6 +38,11 @@ class LoggedExerciseCard extends ConsumerWidget {
       initialRpe: lastWorkingSet?.rpe,
     );
     if (result == null) return;
+
+    // Snapshot de PRs ANTES de insertar para detectar récord
+    final oldPRs = ref.read(allTimePRsProvider).valueOrNull ?? {};
+    final oldPR = oldPRs[entry.exercise.id];
+
     await ref.read(workoutRepositoryProvider).addSet(
           loggedExerciseId: entry.logged.id,
           weightKg: result.weightKg,
@@ -51,6 +58,28 @@ class LoggedExerciseCard extends ConsumerWidget {
             exerciseId: entry.exercise.id,
             exerciseName: entry.exercise.name,
           );
+
+      // PR check
+      final est1RM = estimatedOneRepMax(
+        weightKg: result.weightKg,
+        reps: result.reps,
+      );
+      final kinds = <PRKind>{};
+      if (oldPR == null || result.weightKg > oldPR.bestWeightKg + 0.001) {
+        kinds.add(PRKind.weight);
+      }
+      if (oldPR == null || est1RM > oldPR.bestEst1RMKg + 0.001) {
+        kinds.add(PRKind.oneRm);
+      }
+      if (kinds.isNotEmpty && context.mounted) {
+        await PRCelebration.show(
+          context,
+          exerciseName: entry.exercise.name,
+          weightKg: result.weightKg,
+          reps: result.reps,
+          kinds: kinds,
+        );
+      }
     }
   }
 

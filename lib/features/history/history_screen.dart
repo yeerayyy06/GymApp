@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../shared/widgets/skeleton.dart';
 import 'providers/history_providers.dart';
 import 'widgets/history_calendar.dart';
 import 'widgets/session_card.dart';
@@ -27,7 +28,10 @@ class HistoryScreen extends ConsumerWidget {
         ),
       ),
       body: allSummariesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.fromLTRB(12, 16, 12, 0),
+          child: SkeletonList(itemCount: 5, itemHeight: 130),
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

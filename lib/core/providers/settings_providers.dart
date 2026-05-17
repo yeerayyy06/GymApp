@@ -41,6 +41,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(weightUnit: unit);
     await _service.saveWeightUnit(unit);
   }
+
+  Future<void> completeOnboarding() async {
+    state = state.copyWith(hasCompletedOnboarding: true);
+    await _service.saveOnboardingCompleted(true);
+  }
 }
 
 final settingsProvider =
