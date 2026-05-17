@@ -8,8 +8,11 @@ import '../../core/utils/formatters.dart';
 import '../../shared/widgets/line_chart_card.dart';
 import '../history/providers/history_providers.dart';
 import 'providers/profile_providers.dart';
+import 'widgets/activity_heatmap_card.dart';
 import 'widgets/bodyweight_form_dialog.dart';
+import 'widgets/muscle_donut_card.dart';
 import 'widgets/muscle_volume_card.dart';
+import 'widgets/streak_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -73,6 +76,11 @@ class _ProfileBody extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 96),
       children: [
         _BodyweightHeader(latest: latest, delta: delta, now: now),
+        const StreakCard(),
+        const _TrainingSummaryCard(),
+        const ActivityHeatmapCard(),
+        const MuscleDonutCard(),
+        const MuscleVolumeCard(),
         LineChartCard(
           title: 'Evolución del peso',
           icon: Icons.show_chart_rounded,
@@ -80,8 +88,6 @@ class _ProfileBody extends ConsumerWidget {
           unit: ' kg',
           daysWindow: 90,
         ),
-        const _TrainingSummaryCard(),
-        const MuscleVolumeCard(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
           child: Text(

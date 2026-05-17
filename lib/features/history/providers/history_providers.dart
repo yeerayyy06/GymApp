@@ -61,6 +61,43 @@ final exerciseHistoryProvider =
   return ref.watch(historyRepositoryProvider).watchExerciseHistory(exerciseId);
 });
 
+/// Mapa fecha (startOfDay) → volumen total acumulado de todas las
+/// sesiones completadas ese día. Calculado a partir de
+/// sessionSummariesProvider.
+final dailyVolumeProvider =
+    Provider<AsyncValue<Map<DateTime, double>>>((ref) {
+  final asyncSums = ref.watch(sessionSummariesProvider);
+  return asyncSums.whenData((sums) {
+    final byDay = <DateTime, double>{};
+    for (final s in sums) {
+      final day = startOfDay(s.session.startedAt);
+      byDay[day] = (byDay[day] ?? 0) + s.totalVolumeKg;
+    }
+    return byDay;
+  });
+});
+
+/// Racha actual: días consecutivos con entrenamiento desde hoy hacia
+/// atrás (si hoy no hay sesión, mira a partir de ayer para no romper
+/// la racha de buena mañana).
+final currentStreakProvider = Provider<AsyncValue<int>>((ref) {
+  final asyncByDay = ref.watch(dailyVolumeProvider);
+  final clock = ref.watch(clockProvider);
+  return asyncByDay.whenData((byDay) {
+    final today = startOfDay(clock());
+    var streak = 0;
+    var cursor = today;
+    if (!byDay.containsKey(today)) {
+      cursor = today.subtract(const Duration(days: 1));
+    }
+    while ((byDay[cursor] ?? 0) > 0) {
+      streak++;
+      cursor = cursor.subtract(const Duration(days: 1));
+    }
+    return streak;
+  });
+});
+
 final muscleVolumeWindowProvider = StateProvider<int>((_) => 7);
 
 final volumeByMuscleProvider =

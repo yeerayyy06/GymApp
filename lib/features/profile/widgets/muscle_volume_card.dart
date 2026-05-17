@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/muscle_color.dart';
 import '../../../core/domain/muscle_group.dart';
 import '../../../core/utils/formatters.dart';
 import '../../history/providers/history_providers.dart';
@@ -242,11 +243,7 @@ class _MuscleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = ratio > 0.85
-        ? scheme.tertiary
-        : ratio > 0.5
-            ? scheme.primary
-            : scheme.primary.withValues(alpha: 0.55);
+    final color = muscle.brandColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
