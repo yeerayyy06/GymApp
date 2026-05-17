@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/demo_data_service.dart';
 import '../services/settings_service.dart';
+import 'clock_provider.dart';
+import 'database_provider.dart';
+import 'id_provider.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError(
@@ -51,4 +55,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 final settingsProvider =
     StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
   return SettingsNotifier(ref.watch(settingsServiceProvider));
+});
+
+final demoDataServiceProvider = Provider<DemoDataService>((ref) {
+  return DemoDataService(
+    db: ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+    idGenerator: ref.watch(idGeneratorProvider),
+  );
 });

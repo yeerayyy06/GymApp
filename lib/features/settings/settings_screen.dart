@@ -105,6 +105,31 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
+          _SectionHeader(title: 'Datos', icon: Icons.dataset_outlined),
+          _SettingsCard(
+            children: [
+              _ActionTile(
+                icon: Icons.auto_awesome_rounded,
+                title: 'Generar datos de prueba',
+                subtitle: '90 días de sesiones + 3 rutinas + peso',
+                onTap: () => _confirmGenerate(context, ref),
+              ),
+              Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+              ),
+              _ActionTile(
+                icon: Icons.delete_sweep_outlined,
+                title: 'Borrar todos los datos',
+                subtitle: 'Sesiones, rutinas y peso corporal',
+                onTap: () => _confirmClear(context, ref),
+                destructive: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           _SectionHeader(title: 'Acerca de', icon: Icons.info_outline_rounded),
           _SettingsCard(
             children: [
@@ -126,6 +151,79 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _confirmGenerate(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Generar datos de prueba'),
+        content: const Text(
+          'Se añadirán 3 rutinas (Push / Pull / Piernas), unas 50 '
+          'sesiones de los últimos 90 días con progresión realista, y '
+          'unas 30 entradas de peso corporal. Los datos existentes se '
+          'conservan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Generar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Generando datos…')),
+    );
+    final result =
+        await ref.read(demoDataServiceProvider).generate(days: 90);
+    if (!context.mounted) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          '${result.sessions} sesiones, ${result.routines} rutinas, '
+          '${result.bodyweightEntries} pesos generados',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Borrar todos los datos'),
+        content: const Text(
+          'Se eliminarán sesiones, rutinas y registros de peso. Los '
+          'ejercicios del catálogo se mantienen. Esta acción no se '
+          'puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Borrar todo'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await ref.read(demoDataServiceProvider).clearAll();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Datos borrados')),
     );
   }
 
@@ -308,6 +406,75 @@ class _ExerciseRestRow extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = destructive ? scheme.error : scheme.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: color.withValues(alpha: 0.15),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: destructive ? scheme.error : null,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
