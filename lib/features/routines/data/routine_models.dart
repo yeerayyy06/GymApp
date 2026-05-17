@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../../core/domain/muscle_group.dart';
 
 class RoutineExerciseDraft {
   const RoutineExerciseDraft({
@@ -58,4 +59,17 @@ class RoutineWithExercises {
   int get exerciseCount => exercises.length;
   int get totalTargetSets =>
       exercises.fold(0, (sum, e) => sum + e.routineExercise.targetSets);
+
+  /// Top 3 grupos musculares (por nº de ejercicios que los trabajan)
+  List<MuscleGroup> get topMuscleGroups {
+    final counts = <MuscleGroup, int>{};
+    for (final e in exercises) {
+      for (final m in e.exercise.primaryMuscles) {
+        counts[m] = (counts[m] ?? 0) + 1;
+      }
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(3).map((e) => e.key).toList(growable: false);
+  }
 }

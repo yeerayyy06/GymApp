@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../shared/widgets/muscle_pill.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'data/routine_models.dart';
 import 'providers/routine_providers.dart';
@@ -137,11 +138,6 @@ class _RoutineRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    final exerciseNames = routine.exercises
-        .take(4)
-        .map((e) => e.exercise.name)
-        .toList();
-    final extra = routine.exerciseCount - exerciseNames.length;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -203,43 +199,16 @@ class _RoutineRow extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (exerciseNames.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                if (routine.topMuscleGroups.isNotEmpty) ...[
+                  const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Wrap(
                       spacing: 6,
                       runSpacing: 6,
                       children: [
-                        for (final name in exerciseNames)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: scheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        if (extra > 0)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Text(
-                              '+$extra',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: scheme.onSurfaceVariant,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
+                        for (final m in routine.topMuscleGroups)
+                          MusclePill(muscle: m),
                       ],
                     ),
                   ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/formatters.dart';
+import '../../../shared/widgets/app_gradients.dart';
+import '../../../shared/widgets/bento_tile.dart';
 import '../providers/history_providers.dart';
 
 class StatsSummaryCard extends ConsumerWidget {
@@ -12,109 +14,98 @@ class StatsSummaryCard extends ConsumerWidget {
     final statsAsync = ref.watch(historyStatsProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.primary.withValues(alpha: 0.12),
-            scheme.tertiary.withValues(alpha: 0.06),
-          ],
-        ),
-        border: Border.all(
-          color: scheme.primary.withValues(alpha: 0.15),
-        ),
+    return statsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        child: statsAsync.when(
-          loading: () => const SizedBox(
-            height: 60,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, _) => Text('Error: $error'),
-          data: (stats) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.insights_rounded,
-                    size: 18,
-                    color: scheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Resumen',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  _StatBlock(
-                    value: '${stats.sessionsThisWeek}',
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Error: $error'),
+      ),
+      data: (stats) => Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: BentoTile(
+                    gradient: AppGradients.ocean,
+                    icon: Icons.date_range_rounded,
                     label: 'Esta semana',
-                    accent: scheme.primary,
+                    value: '${stats.sessionsThisWeek}',
+                    subtitle: stats.sessionsThisWeek == 1
+                        ? 'sesión'
+                        : 'sesiones',
+                    compact: true,
                   ),
-                  _StatBlock(
-                    value: '${stats.sessionsThisMonth}',
-                    label: 'Este mes',
-                    accent: scheme.secondary,
-                  ),
-                  _StatBlock(
-                    value: '${stats.totalSessions}',
-                    label: 'Total',
-                    accent: scheme.tertiary,
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Divider(
-                  color: scheme.outlineVariant.withValues(alpha: 0.4),
-                  height: 1,
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: BentoTile(
+                    gradient: AppGradients.violet,
+                    icon: Icons.calendar_today_rounded,
+                    label: 'Este mes',
+                    value: '${stats.sessionsThisMonth}',
+                    subtitle: stats.sessionsThisMonth == 1
+                        ? 'sesión'
+                        : 'sesiones',
+                    compact: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: scheme.surfaceContainerHigh,
               ),
-              Row(
+              child: Row(
                 children: [
-                  _StatBlock(
+                  _SmallStat(
+                    icon: Icons.fitness_center_rounded,
                     value: formatVolume(stats.totalVolumeKg),
                     label: 'Volumen total',
-                    accent: scheme.primary,
+                    color: scheme.primary,
                   ),
-                  _StatBlock(
+                  const _StatDivider(),
+                  _SmallStat(
+                    icon: Icons.repeat_rounded,
                     value: '${stats.totalSets}',
                     label: 'Series',
-                    accent: scheme.secondary,
+                    color: scheme.secondary,
+                  ),
+                  const _StatDivider(),
+                  _SmallStat(
+                    icon: Icons.event_available_rounded,
+                    value: '${stats.totalSessions}',
+                    label: 'Sesiones',
+                    color: scheme.tertiary,
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StatBlock extends StatelessWidget {
-  const _StatBlock({
+class _SmallStat extends StatelessWidget {
+  const _SmallStat({
+    required this.icon,
     required this.value,
     required this.label,
-    required this.accent,
+    required this.color,
   });
-
+  final IconData icon;
   final String value;
   final String label;
-  final Color accent;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -122,23 +113,37 @@ class _StatBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: accent,
+                  letterSpacing: -0.4,
+                  color: color,
                 ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 30,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color:
+          Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4),
     );
   }
 }

@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/providers/clock_provider.dart';
 import '../../core/utils/formatters.dart';
+import '../../shared/widgets/app_gradients.dart';
+import '../../shared/widgets/bento_tile.dart';
+import '../../shared/widgets/muscle_pill.dart';
+import '../history/providers/history_providers.dart';
 import '../routines/data/routine_models.dart';
 import '../routines/providers/routine_providers.dart';
 import 'providers/rest_timer_provider.dart';
@@ -143,68 +148,86 @@ class _WorkoutBody extends ConsumerWidget {
 class _StartSessionView extends ConsumerWidget {
   const _StartSessionView();
 
+  String _lastSessionLabel(DateTime? last, DateTime now) {
+    if (last == null) return 'Nunca';
+    final days = now.difference(last).inDays;
+    if (days == 0) return 'Hoy';
+    if (days == 1) return 'Ayer';
+    return 'Hace $days d';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
     final routinesAsync = ref.watch(routinesProvider);
+    final statsAsync = ref.watch(historyStatsProvider);
+    final sumAsync = ref.watch(sessionSummariesProvider);
+    final now = ref.watch(clockProvider)();
+    final lastSession = sumAsync.maybeWhen(
+      data: (sums) => sums.isEmpty ? null : sums.first.session.startedAt,
+      orElse: () => null,
+    );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    scheme.primary.withValues(alpha: 0.18),
-                    scheme.tertiary.withValues(alpha: 0.1),
-                  ],
-                ),
-              ),
-              child: Icon(
-                Icons.fitness_center_rounded,
-                size: 40,
-                color: scheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Center(
-            child: Text(
-              'Listo para entrenar',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-            ),
-          ),
-          const SizedBox(height: 22),
           Row(
             children: [
-              Text(
-                'Mis rutinas',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                    ),
+              Expanded(
+                child: BentoTile(
+                  gradient: AppGradients.ocean,
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Este mes',
+                  value: statsAsync.maybeWhen(
+                    data: (s) => '${s.sessionsThisMonth}',
+                    orElse: () => '…',
+                  ),
+                  subtitle: statsAsync.maybeWhen(
+                    data: (s) => s.sessionsThisMonth == 1 ? 'sesión' : 'sesiones',
+                    orElse: () => '',
+                  ),
+                  compact: true,
+                ),
               ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => context.push('/workout/routines'),
-                icon: const Icon(Icons.tune_rounded, size: 16),
-                label: const Text('Gestionar'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
+              const SizedBox(width: 8),
+              Expanded(
+                child: BentoTile(
+                  gradient: AppGradients.sunset,
+                  icon: Icons.history_rounded,
+                  label: 'Última',
+                  value: _lastSessionLabel(lastSession, now),
+                  subtitle: lastSession == null
+                      ? 'Empieza tu primera'
+                      : 'a las ${formatTime(lastSession)}',
+                  compact: true,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 18),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                Text(
+                  'Mis rutinas',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => context.push('/workout/routines'),
+                  icon: const Icon(Icons.tune_rounded, size: 16),
+                  label: const Text('Gestionar'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           routinesAsync.when(
@@ -328,7 +351,17 @@ class _RoutineQuickStart extends ConsumerWidget {
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
+                if (routine.topMuscleGroups.isNotEmpty)
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: [
+                      for (final m in routine.topMuscleGroups)
+                        MusclePill(muscle: m, dense: true),
+                    ],
+                  ),
+                const SizedBox(height: 4),
                 Text(
                   '${routine.exerciseCount} ejercicios · ${routine.totalTargetSets} series',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
