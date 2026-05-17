@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/domain/catalog_source.dart';
+import '../../../core/domain/muscle_group.dart';
 import '../../../core/providers/clock_provider.dart';
 import '../../../core/providers/id_provider.dart';
 
@@ -32,6 +34,30 @@ class WorkoutRepository {
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm.asc(t.name)]);
     return query.watch();
+  }
+
+  Future<ExerciseRow> createExercise({
+    required String name,
+    required List<MuscleGroup> primaryMuscles,
+    String? equipment,
+    bool isCompound = false,
+  }) async {
+    final now = _clock();
+    final id = _idGenerator();
+    await _db.into(_db.exercises).insert(
+          ExercisesCompanion.insert(
+            id: id,
+            name: name,
+            primaryMuscles: primaryMuscles,
+            equipment: Value(equipment),
+            source: CatalogSource.user,
+            isCompound: Value(isCompound),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    return (_db.select(_db.exercises)..where((t) => t.id.equals(id)))
+        .getSingle();
   }
 
   Stream<WorkoutSessionRow?> watchActiveSession() {

@@ -144,9 +144,6 @@ class _RoutineRow extends ConsumerWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: scheme.surfaceContainerHigh,
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.3),
-        ),
       ),
       child: Material(
         color: Colors.transparent,

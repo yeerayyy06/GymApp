@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/domain/muscle_group.dart';
 import '../providers/workout_providers.dart';
+import 'exercise_create_dialog.dart';
 
 class ExercisePickerSheet extends ConsumerStatefulWidget {
   const ExercisePickerSheet({super.key});
@@ -47,22 +48,41 @@ class _ExercisePickerSheetState extends ConsumerState<ExercisePickerSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Añadir ejercicio',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Añadir ejercicio',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
                           ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final created =
+                                await ExerciseCreateDialog.show(context);
+                            if (!context.mounted || created == null) return;
+                            Navigator.of(context).pop(created);
+                          },
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Crear'),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     TextField(
                       autofocus: false,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search_rounded),
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search_rounded),
                         hintText: 'Buscar',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                         isDense: true,
                       ),
                       onChanged: (value) =>

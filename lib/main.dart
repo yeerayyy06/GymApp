@@ -13,7 +13,7 @@ void main() async {
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return Material(
-      color: const Color(0xFF121212),
+      color: const Color(0xFF000000),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),

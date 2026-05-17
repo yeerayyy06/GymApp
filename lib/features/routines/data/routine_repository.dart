@@ -229,6 +229,85 @@ class RoutineRepository {
     });
   }
 
+  Future<String> createRoutineFromSession({
+    required String sessionId,
+    required String name,
+    String? description,
+  }) async {
+    final now = _clock();
+    final routineId = _idGenerator();
+    final dayId = _idGenerator();
+
+    final loggedExercises = _db.loggedExercises;
+    final exercises = _db.exercises;
+    final loggedSets = _db.loggedSets;
+
+    return _db.transaction(() async {
+      final query = _db.select(loggedExercises).join([
+        innerJoin(
+          exercises,
+          exercises.id.equalsExp(loggedExercises.exerciseId),
+        ),
+      ])
+        ..where(loggedExercises.sessionId.equals(sessionId) &
+            loggedExercises.deletedAt.isNull())
+        ..orderBy([OrderingTerm.asc(loggedExercises.orderInSession)]);
+      final rows = await query.get();
+
+      await _db.into(_db.routines).insert(
+            RoutinesCompanion.insert(
+              id: routineId,
+              name: name,
+              description: Value(description),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await _db.into(_db.routineDays).insert(
+            RoutineDaysCompanion.insert(
+              id: dayId,
+              routineId: routineId,
+              name: 'Día único',
+              orderInRoutine: 0,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      for (var i = 0; i < rows.length; i++) {
+        final logged = rows[i].readTable(loggedExercises);
+        final setsForExercise = await (_db.select(loggedSets)
+              ..where((t) =>
+                  t.loggedExerciseId.equals(logged.id) &
+                  t.deletedAt.isNull() &
+                  t.isWarmup.equals(false)))
+            .get();
+        final targetSets = setsForExercise.isEmpty ? 3 : setsForExercise.length;
+        int targetRepsMin = 8;
+        int targetRepsMax = 12;
+        if (setsForExercise.isNotEmpty) {
+          final repsList = setsForExercise.map((s) => s.reps).toList()..sort();
+          targetRepsMin = repsList.first;
+          targetRepsMax = repsList.last;
+        }
+        await _db.into(_db.routineExercises).insert(
+              RoutineExercisesCompanion.insert(
+                id: _idGenerator(),
+                routineDayId: dayId,
+                exerciseId: logged.exerciseId,
+                orderInDay: i,
+                targetSets: targetSets,
+                targetRepsMin: targetRepsMin,
+                targetRepsMax: targetRepsMax,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+      }
+      return routineId;
+    });
+  }
+
   Future<void> deleteRoutine(String routineId) async {
     final now = _clock();
     await (_db.update(_db.routines)..where((t) => t.id.equals(routineId)))

@@ -7,6 +7,7 @@ import '../../core/utils/formatters.dart';
 import '../routines/data/routine_models.dart';
 import '../routines/providers/routine_providers.dart';
 import 'providers/rest_timer_provider.dart';
+import 'widgets/save_as_routine_dialog.dart';
 import 'providers/workout_providers.dart';
 import 'widgets/elapsed_timer.dart';
 import 'widgets/exercise_picker_sheet.dart';
@@ -28,7 +29,7 @@ class WorkoutScreen extends ConsumerWidget {
             letterSpacing: -0.5,
           ),
         ),
-        actions: const [_EndSessionAction()],
+        actions: const [_SessionMenu(), _EndSessionAction()],
       ),
       body: bootstrap.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -40,6 +41,40 @@ class WorkoutScreen extends ConsumerWidget {
         ),
         data: (_) => const _WorkoutBody(),
       ),
+    );
+  }
+}
+
+class _SessionMenu extends ConsumerWidget {
+  const _SessionMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(activeSessionProvider).valueOrNull;
+    if (session == null) return const SizedBox.shrink();
+    return PopupMenuButton<String>(
+      tooltip: 'Más opciones',
+      icon: const Icon(Icons.more_horiz_rounded),
+      onSelected: (value) async {
+        if (value == 'save_routine') {
+          await SaveAsRoutineDialog.show(
+            context,
+            ref: ref,
+            sessionId: session.id,
+          );
+        }
+      },
+      itemBuilder: (_) => const [
+        PopupMenuItem(
+          value: 'save_routine',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.bookmark_add_outlined),
+            title: Text('Guardar como rutina'),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -279,9 +314,6 @@ class _RoutineQuickStart extends ConsumerWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: scheme.surfaceContainerHigh,
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.3),
-        ),
       ),
       child: Row(
         children: [

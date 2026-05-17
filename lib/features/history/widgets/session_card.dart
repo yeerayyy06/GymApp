@@ -54,9 +54,6 @@ class SessionCard extends ConsumerWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: scheme.surfaceContainerHigh,
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.3),
-        ),
       ),
       child: Material(
         color: Colors.transparent,
