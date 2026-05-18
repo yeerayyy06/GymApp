@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/csv_export_service.dart';
 import '../services/demo_data_service.dart';
 import '../services/settings_service.dart';
 import 'clock_provider.dart';
@@ -63,4 +64,8 @@ final demoDataServiceProvider = Provider<DemoDataService>((ref) {
     clock: ref.watch(clockProvider),
     idGenerator: ref.watch(idGeneratorProvider),
   );
+});
+
+final csvExportServiceProvider = Provider<CsvExportService>((ref) {
+  return CsvExportService(ref.watch(databaseProvider));
 });

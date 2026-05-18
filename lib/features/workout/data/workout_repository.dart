@@ -290,6 +290,25 @@ class WorkoutRepository {
     });
   }
 
+  Future<void> reorderLoggedExercises({
+    required String sessionId,
+    required List<String> orderedIds,
+  }) async {
+    final now = _clock();
+    return _db.transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await (_db.update(_db.loggedExercises)
+              ..where((t) => t.id.equals(orderedIds[i])))
+            .write(
+          LoggedExercisesCompanion(
+            orderInSession: Value(i),
+            updatedAt: Value(now),
+          ),
+        );
+      }
+    });
+  }
+
   Stream<List<LoggedSetRow>> watchSets(String loggedExerciseId) {
     final query = _db.select(_db.loggedSets)
       ..where((t) =>

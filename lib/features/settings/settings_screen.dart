@@ -109,6 +109,30 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsCard(
             children: [
               _ActionTile(
+                icon: Icons.download_rounded,
+                title: 'Exportar sesiones (CSV)',
+                subtitle: 'Descarga un archivo con todas tus series',
+                onTap: () => _exportSessions(context, ref),
+              ),
+              Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+              ),
+              _ActionTile(
+                icon: Icons.monitor_weight_outlined,
+                title: 'Exportar peso corporal (CSV)',
+                subtitle: 'Tu historial de peso completo',
+                onTap: () => _exportBodyweight(context, ref),
+              ),
+              Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+              ),
+              _ActionTile(
                 icon: Icons.auto_awesome_rounded,
                 title: 'Generar datos de prueba',
                 subtitle: '90 días de sesiones + 3 rutinas + peso',
@@ -152,6 +176,44 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _exportSessions(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Generando CSV…')),
+    );
+    try {
+      final n = await ref.read(csvExportServiceProvider).exportSessions();
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('$n series exportadas')),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo exportar: $e')),
+      );
+    }
+  }
+
+  Future<void> _exportBodyweight(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Generando CSV…')),
+    );
+    try {
+      final n = await ref.read(csvExportServiceProvider).exportBodyweight();
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('$n registros exportados')),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo exportar: $e')),
+      );
+    }
   }
 
   Future<void> _confirmGenerate(BuildContext context, WidgetRef ref) async {

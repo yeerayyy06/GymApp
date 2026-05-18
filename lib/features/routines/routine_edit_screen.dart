@@ -73,15 +73,6 @@ class _RoutineEditScreenState extends ConsumerState<RoutineEditScreen> {
     });
   }
 
-  void _move(int index, int delta) {
-    final newIndex = index + delta;
-    if (newIndex < 0 || newIndex >= _exercises.length) return;
-    setState(() {
-      final item = _exercises.removeAt(index);
-      _exercises.insert(newIndex, item);
-    });
-  }
-
   void _remove(int index) {
     setState(() => _exercises.removeAt(index));
   }
@@ -229,20 +220,30 @@ class _RoutineEditScreenState extends ConsumerState<RoutineEditScreen> {
               ),
             )
           else
-            ..._exercises.asMap().entries.map((entry) {
-              final i = entry.key;
-              final e = entry.value;
-              return _ExerciseRow(
-                draft: e,
-                index: i + 1,
-                isFirst: i == 0,
-                isLast: i == _exercises.length - 1,
-                onTap: () => _editTargets(i),
-                onMoveUp: () => _move(i, -1),
-                onMoveDown: () => _move(i, 1),
-                onDelete: () => _remove(i),
-              );
-            }),
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: _exercises.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = _exercises.removeAt(oldIndex);
+                  _exercises.insert(newIndex, item);
+                });
+              },
+              itemBuilder: (context, i) {
+                final e = _exercises[i];
+                return _ExerciseRow(
+                  key: ValueKey('${e.exerciseId}-$i'),
+                  draft: e,
+                  index: i + 1,
+                  reorderIndex: i,
+                  onTap: () => _editTargets(i),
+                  onDelete: () => _remove(i),
+                );
+              },
+            ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _addExercise,
@@ -263,23 +264,18 @@ class _RoutineEditScreenState extends ConsumerState<RoutineEditScreen> {
 
 class _ExerciseRow extends StatelessWidget {
   const _ExerciseRow({
+    super.key,
     required this.draft,
     required this.index,
-    required this.isFirst,
-    required this.isLast,
+    required this.reorderIndex,
     required this.onTap,
-    required this.onMoveUp,
-    required this.onMoveDown,
     required this.onDelete,
   });
 
   final RoutineExerciseDraft draft;
   final int index;
-  final bool isFirst;
-  final bool isLast;
+  final int reorderIndex;
   final VoidCallback onTap;
-  final VoidCallback onMoveUp;
-  final VoidCallback onMoveDown;
   final VoidCallback onDelete;
 
   @override
@@ -344,19 +340,16 @@ class _ExerciseRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
-                  onPressed: isFirst ? null : onMoveUp,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
-                  onPressed: isLast ? null : onMoveDown,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                ReorderableDragStartListener(
+                  index: reorderIndex,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.drag_indicator_rounded,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      size: 20,
+                    ),
+                  ),
                 ),
                 IconButton(
                   icon: Icon(Icons.close_rounded,

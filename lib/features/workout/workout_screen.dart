@@ -545,14 +545,31 @@ class _ActiveSessionView extends ConsumerWidget {
                   ),
                 );
               }
-              return ListView.builder(
+              return ReorderableListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: entries.length,
+                buildDefaultDragHandles: false,
+                onReorder: (oldIndex, newIndex) async {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final ids = entries.map((e) => e.logged.id).toList();
+                  final moved = ids.removeAt(oldIndex);
+                  ids.insert(newIndex, moved);
+                  await ref
+                      .read(workoutRepositoryProvider)
+                      .reorderLoggedExercises(
+                        sessionId: session.id,
+                        orderedIds: ids,
+                      );
+                },
                 itemBuilder: (context, index) {
-                  return LoggedExerciseCard(
-                    entry: entries[index],
-                    canMoveUp: index > 0,
-                    canMoveDown: index < entries.length - 1,
+                  final entry = entries[index];
+                  return Padding(
+                    key: ValueKey(entry.logged.id),
+                    padding: EdgeInsets.zero,
+                    child: LoggedExerciseCard(
+                      entry: entry,
+                      indexInSession: index,
+                    ),
                   );
                 },
               );

@@ -42,6 +42,9 @@ dependencies:
   # Skeleton loaders
   shimmer: ^3.0.0
 
+  # Exportar archivos
+  file_saver: ^0.2.14
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -16,13 +16,11 @@ class LoggedExerciseCard extends ConsumerWidget {
   const LoggedExerciseCard({
     super.key,
     required this.entry,
-    this.canMoveUp = true,
-    this.canMoveDown = true,
+    this.indexInSession = 0,
   });
 
   final LoggedExerciseWithDetails entry;
-  final bool canMoveUp;
-  final bool canMoveDown;
+  final int indexInSession;
 
   Future<void> _addSet(BuildContext context, WidgetRef ref) async {
     final sets = ref.read(setsProvider(entry.logged.id)).valueOrNull ?? [];
@@ -115,14 +113,6 @@ class LoggedExerciseCard extends ConsumerWidget {
         .removeLoggedExercise(entry.logged.id);
   }
 
-  Future<void> _move(WidgetRef ref, int delta) async {
-    await ref.read(workoutRepositoryProvider).moveLoggedExercise(
-          sessionId: entry.logged.sessionId,
-          loggedExerciseId: entry.logged.id,
-          delta: delta,
-        );
-  }
-
   Future<void> _deleteSet(WidgetRef ref, String setId) async {
     await ref.read(workoutRepositoryProvider).deleteSet(setId);
   }
@@ -169,39 +159,23 @@ class LoggedExerciseCard extends ConsumerWidget {
                     ],
                   ),
                 ),
+                ReorderableDragStartListener(
+                  index: indexInSession,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.drag_indicator_rounded,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      size: 20,
+                    ),
+                  ),
+                ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
-                    switch (value) {
-                      case 'remove':
-                        _removeExercise(ref);
-                      case 'move_up':
-                        _move(ref, -1);
-                      case 'move_down':
-                        _move(ref, 1);
-                    }
+                    if (value == 'remove') _removeExercise(ref);
                   },
-                  itemBuilder: (_) => [
-                    if (canMoveUp)
-                      const PopupMenuItem(
-                        value: 'move_up',
-                        child: ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.arrow_upward_rounded),
-                          title: Text('Mover arriba'),
-                        ),
-                      ),
-                    if (canMoveDown)
-                      const PopupMenuItem(
-                        value: 'move_down',
-                        child: ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.arrow_downward_rounded),
-                          title: Text('Mover abajo'),
-                        ),
-                      ),
-                    const PopupMenuItem(
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
                       value: 'remove',
                       child: ListTile(
                         dense: true,
@@ -218,6 +192,7 @@ class LoggedExerciseCard extends ConsumerWidget {
           _PreviousPerformance(
             exerciseId: entry.exercise.id,
             currentSessionId: entry.logged.sessionId,
+            loggedExerciseId: entry.logged.id,
           ),
           setsAsync.when(
             loading: () => const Padding(
@@ -280,10 +255,12 @@ class _PreviousPerformance extends ConsumerWidget {
   const _PreviousPerformance({
     required this.exerciseId,
     required this.currentSessionId,
+    required this.loggedExerciseId,
   });
 
   final String exerciseId;
   final String currentSessionId;
+  final String loggedExerciseId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -291,25 +268,99 @@ class _PreviousPerformance extends ConsumerWidget {
       (exerciseId: exerciseId, excludingSessionId: currentSessionId),
     ));
     final unit = ref.watch(settingsProvider).weightUnit;
+    final currentSetsAsync = ref.watch(setsProvider(loggedExerciseId));
     final scheme = Theme.of(context).colorScheme;
     return asyncPrev.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (prev) {
         if (prev == null) return const SizedBox.shrink();
-        final workingSets =
+        final prevWorking =
             prev.sets.where((s) => !s.isWarmup).toList(growable: false);
-        if (workingSets.isEmpty) return const SizedBox.shrink();
-        final topSet = workingSets
+        if (prevWorking.isEmpty) return const SizedBox.shrink();
+        final prevTop = prevWorking
             .reduce((a, b) => (a.weightKg * a.reps) >= (b.weightKg * b.reps) ? a : b);
         final summary =
-            '${workingSets.length}×${topSet.reps} · ${formatWeight(topSet.weightKg, unit)}';
+            '${prevWorking.length}×${prevTop.reps} · ${formatWeight(prevTop.weightKg, unit)}';
         final daysAgo = DateTime.now().difference(prev.sessionStartedAt).inDays;
         final whenLabel = daysAgo == 0
             ? 'hoy'
             : daysAgo == 1
                 ? 'ayer'
                 : 'hace ${daysAgo}d';
+
+        // Delta vs sesión actual (si ya hay sets de trabajo registrados)
+        final currentWorking = currentSetsAsync.maybeWhen(
+          data: (sets) => sets.where((s) => !s.isWarmup).toList(),
+          orElse: () => <LoggedSetRow>[],
+        );
+        Widget? deltaChip;
+        if (currentWorking.isNotEmpty) {
+          final currTop = currentWorking
+              .reduce((a, b) => (a.weightKg * a.reps) >= (b.weightKg * b.reps) ? a : b);
+          final weightDelta = currTop.weightKg - prevTop.weightKg;
+          final repDelta = currTop.reps - prevTop.reps;
+          final volDelta = (currTop.weightKg * currTop.reps) -
+              (prevTop.weightKg * prevTop.reps);
+          // Mostrar la dimensión más relevante
+          final List<String> parts = [];
+          Color color;
+          IconData icon;
+          if (weightDelta.abs() > 0.05) {
+            parts.add(
+              '${weightDelta > 0 ? '+' : ''}${unit.fromKg(weightDelta).toStringAsFixed(weightDelta.abs() < 10 ? 1 : 0)} ${unit.label}',
+            );
+          }
+          if (repDelta != 0) {
+            parts.add('${repDelta > 0 ? '+' : ''}$repDelta rep');
+          }
+          if (parts.isEmpty && volDelta.abs() > 0.5) {
+            parts.add(
+              '${volDelta > 0 ? '+' : ''}${unit.fromKg(volDelta).toStringAsFixed(0)} ${unit.label}',
+            );
+          }
+          final isUp = volDelta > 0.5 ||
+              (volDelta.abs() <= 0.5 && weightDelta > 0.05);
+          final isDown = volDelta < -0.5 ||
+              (volDelta.abs() <= 0.5 && weightDelta < -0.05);
+          if (isUp) {
+            color = const Color(0xFF22C55E);
+            icon = Icons.trending_up_rounded;
+          } else if (isDown) {
+            color = const Color(0xFFEF4444);
+            icon = Icons.trending_down_rounded;
+          } else {
+            color = scheme.onSurfaceVariant;
+            icon = Icons.trending_flat_rounded;
+          }
+          if (parts.isNotEmpty || !isUp && !isDown) {
+            deltaChip = Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: color.withValues(alpha: 0.16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 11, color: color),
+                  const SizedBox(width: 3),
+                  Text(
+                    parts.isEmpty ? 'igual' : parts.join(' · '),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Container(
@@ -334,6 +385,10 @@ class _PreviousPerformance extends ConsumerWidget {
                         ),
                   ),
                 ),
+                if (deltaChip != null) ...[
+                  const SizedBox(width: 6),
+                  deltaChip,
+                ],
               ],
             ),
           ),
@@ -341,7 +396,6 @@ class _PreviousPerformance extends ConsumerWidget {
       },
     );
   }
-
 }
 
 class _SetTile extends ConsumerWidget {
