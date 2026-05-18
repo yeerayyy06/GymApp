@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/providers/settings_providers.dart';
+import '../../../core/services/audio_service.dart';
 import '../../../core/utils/one_rep_max.dart';
 import '../../../core/utils/weight_format.dart';
+import '../../exercises/data/exercise_videos.dart';
 import '../../history/providers/history_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
@@ -52,6 +54,7 @@ class LoggedExerciseCard extends ConsumerWidget {
     if (!result.isWarmup) {
       final settings = ref.read(settingsProvider);
       final restSeconds = settings.restSecondsFor(entry.exercise.id);
+      AudioService.warmUp();
       ref.read(restTimerProvider.notifier).start(
             duration: Duration(seconds: restSeconds),
             exerciseId: entry.exercise.id,
@@ -139,12 +142,32 @@ class LoggedExerciseCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        entry.exercise.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              entry.exercise.name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            tooltip: 'Ver técnica',
+                            icon: Icon(
+                              Icons.play_circle_outline_rounded,
+                              size: 18,
+                              color: scheme.primary,
+                            ),
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(),
+                            onPressed: () =>
+                                openExerciseVideo(entry.exercise.name),
+                          ),
+                        ],
                       ),
                       if (entry.exercise.equipment != null) ...[
                         const SizedBox(height: 2),

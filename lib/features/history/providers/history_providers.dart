@@ -85,6 +85,27 @@ final dailyVolumeProvider =
   });
 });
 
+/// Volumen agregado por mes (últimos 6 meses).
+final monthlyVolumeProvider =
+    Provider<AsyncValue<List<({DateTime monthStart, double volume})>>>((ref) {
+  final asyncSums = ref.watch(sessionSummariesProvider);
+  final now = ref.watch(clockProvider)();
+  return asyncSums.whenData((sums) {
+    final thisMonth = DateTime(now.year, now.month);
+    final months = List.generate(6, (i) {
+      return DateTime(thisMonth.year, thisMonth.month - (5 - i));
+    });
+    final byMonth = <DateTime, double>{};
+    for (final s in sums) {
+      final m = DateTime(s.session.startedAt.year, s.session.startedAt.month);
+      byMonth[m] = (byMonth[m] ?? 0) + s.totalVolumeKg;
+    }
+    return months
+        .map((m) => (monthStart: m, volume: byMonth[m] ?? 0.0))
+        .toList(growable: false);
+  });
+});
+
 /// Volumen agregado por semana (últimas 8 semanas, lunes-domingo).
 final weeklyVolumeProvider =
     Provider<AsyncValue<List<({DateTime weekStart, double volume})>>>((ref) {

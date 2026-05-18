@@ -5,6 +5,8 @@ import '../../core/utils/formatters.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'providers/history_providers.dart';
 import 'widgets/history_calendar.dart';
+import 'widgets/history_search_delegate.dart';
+import 'widgets/monthly_volume_card.dart';
 import 'widgets/recent_prs_card.dart';
 import 'widgets/session_card.dart';
 import 'widgets/stats_summary_card.dart';
@@ -28,6 +30,14 @@ class HistoryScreen extends ConsumerWidget {
             letterSpacing: -0.5,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Buscar',
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () =>
+                showSearch(context: context, delegate: HistorySearchDelegate()),
+          ),
+        ],
       ),
       body: allSummariesAsync.when(
         loading: () => const Padding(
@@ -63,6 +73,7 @@ class HistoryScreen extends ConsumerWidget {
               const SliverToBoxAdapter(child: StatsSummaryCard()),
               const SliverToBoxAdapter(child: RecentPRsCard()),
               const SliverToBoxAdapter(child: WeeklyVolumeCard()),
+              const SliverToBoxAdapter(child: MonthlyVolumeCard()),
               if (filtered.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,

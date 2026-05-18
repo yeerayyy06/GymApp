@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/settings_providers.dart';
+import '../../../core/services/audio_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../providers/rest_timer_provider.dart';
 
@@ -68,6 +69,7 @@ class _RestTimerBannerState extends ConsumerState<RestTimerBanner> {
     if (isFinished && !_alerted) {
       _alerted = true;
       HapticFeedback.mediumImpact();
+      AudioService.timerEnd();
       final notify = ref.read(settingsProvider).restNotificationsEnabled;
       if (notify) {
         WebNotificationService.show(

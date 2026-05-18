@@ -9,6 +9,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
 import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/line_chart_card.dart';
+import '../exercises/data/exercise_videos.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
 import 'widgets/pr_badge.dart';
@@ -27,6 +28,19 @@ class ExerciseHistoryScreen extends ConsumerWidget {
           'Historial de ejercicio',
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
         ),
+        actions: [
+          historyAsync.when(
+            data: (h) => h == null
+                ? const SizedBox.shrink()
+                : IconButton(
+                    tooltip: 'Ver técnica',
+                    icon: const Icon(Icons.play_circle_outline_rounded),
+                    onPressed: () => openExerciseVideo(h.exercise.name),
+                  ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: historyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
