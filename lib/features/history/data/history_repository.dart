@@ -405,6 +405,88 @@ class HistoryRepository {
     return (sessionStartedAt: session.startedAt, sets: sets);
   }
 
+  /// Ejercicios cerca de batir su PR de peso: filtra los que se han
+  /// entrenado en los últimos [recentDays] días y cuyo peso máximo
+  /// reciente está al menos al [minRatio] del PR all-time (sin haberlo
+  /// igualado todavía).
+  Stream<List<NearPR>> watchExercisesNearPR({
+    int recentDays = 21,
+    double minRatio = 0.92,
+    int limit = 4,
+  }) {
+    final sessions = _db.workoutSessions;
+    final loggedExercises = _db.loggedExercises;
+    final loggedSets = _db.loggedSets;
+    final exercises = _db.exercises;
+
+    final cutoff = _clock().subtract(Duration(days: recentDays));
+
+    final query = _db.select(loggedSets).join([
+      innerJoin(loggedExercises,
+          loggedExercises.id.equalsExp(loggedSets.loggedExerciseId)),
+      innerJoin(sessions, sessions.id.equalsExp(loggedExercises.sessionId)),
+      innerJoin(
+          exercises, exercises.id.equalsExp(loggedExercises.exerciseId)),
+    ])
+      ..where(
+        loggedSets.deletedAt.isNull() &
+            loggedExercises.deletedAt.isNull() &
+            sessions.deletedAt.isNull() &
+            loggedSets.isWarmup.equals(false),
+      );
+
+    return query.watch().map((rows) {
+      final allTimeBest = <String, double>{};
+      final recentBest =
+          <String, ({double kg, int reps, DateTime when})>{};
+      final exById = <String, ExerciseRow>{};
+
+      for (final row in rows) {
+        final set = row.readTable(loggedSets);
+        final logged = row.readTable(loggedExercises);
+        final session = row.readTable(sessions);
+        final ex = row.readTable(exercises);
+        exById[ex.id] = ex;
+
+        if (set.weightKg > (allTimeBest[ex.id] ?? 0)) {
+          allTimeBest[ex.id] = set.weightKg;
+        }
+        if (session.startedAt.isAfter(cutoff)) {
+          final cur = recentBest[ex.id];
+          if (cur == null || set.weightKg > cur.kg) {
+            recentBest[ex.id] = (
+              kg: set.weightKg,
+              reps: set.reps,
+              when: session.startedAt,
+            );
+          }
+        }
+      }
+
+      final candidates = <NearPR>[];
+      for (final entry in recentBest.entries) {
+        final exId = entry.key;
+        final best = allTimeBest[exId] ?? 0;
+        final last = entry.value.kg;
+        if (best <= 0 || last >= best) continue;
+        final ratio = last / best;
+        if (ratio < minRatio) continue;
+        candidates.add(NearPR(
+          exercise: exById[exId]!,
+          bestKg: best,
+          lastKg: last,
+          lastReps: entry.value.reps,
+          gapKg: best - last,
+        ));
+      }
+      candidates.sort((a, b) => a.gapKg.compareTo(b.gapKg));
+      if (candidates.length > limit) {
+        return candidates.sublist(0, limit);
+      }
+      return candidates;
+    });
+  }
+
   Stream<List<PrEvent>> watchRecentPRs({int limit = 10}) {
     final sessions = _db.workoutSessions;
     final loggedExercises = _db.loggedExercises;

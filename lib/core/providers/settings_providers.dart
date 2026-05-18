@@ -51,6 +51,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(hasCompletedOnboarding: true);
     await _service.saveOnboardingCompleted(true);
   }
+
+  Future<void> setRestNotificationsEnabled(bool value) async {
+    state = state.copyWith(restNotificationsEnabled: value);
+    await _service.saveRestNotificationsEnabled(value);
+  }
 }
 
 final settingsProvider =

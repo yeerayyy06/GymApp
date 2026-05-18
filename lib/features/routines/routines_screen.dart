@@ -6,6 +6,7 @@ import '../../shared/widgets/muscle_pill.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'data/routine_models.dart';
 import 'providers/routine_providers.dart';
+import 'widgets/template_picker_sheet.dart';
 
 class RoutinesScreen extends ConsumerWidget {
   const RoutinesScreen({super.key});
@@ -22,6 +23,13 @@ class RoutinesScreen extends ConsumerWidget {
             letterSpacing: -0.3,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Plantillas',
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            onPressed: () => TemplatePickerSheet.show(context),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/workout/routines/new'),
@@ -36,7 +44,9 @@ class RoutinesScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (routines) {
           if (routines.isEmpty) {
-            return const _EmptyView();
+            return _EmptyView(
+              onPickTemplate: () => TemplatePickerSheet.show(context),
+            );
           }
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
@@ -52,7 +62,9 @@ class RoutinesScreen extends ConsumerWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView();
+  const _EmptyView({required this.onPickTemplate});
+
+  final VoidCallback onPickTemplate;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +110,12 @@ class _EmptyView extends StatelessWidget {
                     color: scheme.onSurfaceVariant,
                     height: 1.4,
                   ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(
+              onPressed: onPickTemplate,
+              icon: const Icon(Icons.collections_bookmark_outlined),
+              label: const Text('Empezar desde una plantilla'),
             ),
           ],
         ),

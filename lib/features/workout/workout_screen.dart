@@ -12,6 +12,7 @@ import '../history/providers/history_providers.dart';
 import '../routines/data/routine_models.dart';
 import '../routines/providers/routine_providers.dart';
 import 'providers/rest_timer_provider.dart';
+import 'widgets/near_pr_card.dart';
 import 'widgets/save_as_routine_dialog.dart';
 import 'providers/workout_providers.dart';
 import 'widgets/elapsed_timer.dart';
@@ -213,6 +214,7 @@ class _StartSessionView extends ConsumerWidget {
               ),
             ],
           ),
+          const NearPRCard(),
           const SizedBox(height: 18),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

@@ -125,6 +125,24 @@ class ExerciseHistory {
   final int totalSets;
 }
 
+class NearPR {
+  const NearPR({
+    required this.exercise,
+    required this.bestKg,
+    required this.lastKg,
+    required this.lastReps,
+    required this.gapKg,
+  });
+
+  final ExerciseRow exercise;
+  final double bestKg;
+  final double lastKg;
+  final int lastReps;
+  final double gapKg;
+
+  double get progressRatio => bestKg == 0 ? 0 : (lastKg / bestKg).clamp(0.0, 1.0);
+}
+
 class PrEvent {
   const PrEvent({
     required this.when,

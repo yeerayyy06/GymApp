@@ -10,12 +10,14 @@ class SettingsState {
     this.exerciseRestSeconds = const <String, int>{},
     this.weightUnit = WeightUnit.kg,
     this.hasCompletedOnboarding = false,
+    this.restNotificationsEnabled = false,
   });
 
   final int defaultRestSeconds;
   final Map<String, int> exerciseRestSeconds;
   final WeightUnit weightUnit;
   final bool hasCompletedOnboarding;
+  final bool restNotificationsEnabled;
 
   int restSecondsFor(String? exerciseId) {
     if (exerciseId == null) return defaultRestSeconds;
@@ -30,6 +32,7 @@ class SettingsState {
     Map<String, int>? exerciseRestSeconds,
     WeightUnit? weightUnit,
     bool? hasCompletedOnboarding,
+    bool? restNotificationsEnabled,
   }) {
     return SettingsState(
       defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
@@ -37,6 +40,8 @@ class SettingsState {
       weightUnit: weightUnit ?? this.weightUnit,
       hasCompletedOnboarding:
           hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      restNotificationsEnabled:
+          restNotificationsEnabled ?? this.restNotificationsEnabled,
     );
   }
 }
@@ -50,6 +55,7 @@ class SettingsService {
   static const _exerciseRestPrefix = 'settings.restForExercise.';
   static const _weightUnitKey = 'settings.weightUnit';
   static const _onboardingKey = 'settings.hasCompletedOnboarding';
+  static const _restNotifyKey = 'settings.restNotificationsEnabled';
 
   SettingsState load() {
     final defaultRest = _prefs.getInt(_defaultRestKey) ?? 90;
@@ -72,11 +78,16 @@ class SettingsService {
       exerciseRestSeconds: perExercise,
       weightUnit: unit,
       hasCompletedOnboarding: _prefs.getBool(_onboardingKey) ?? false,
+      restNotificationsEnabled: _prefs.getBool(_restNotifyKey) ?? false,
     );
   }
 
   Future<void> saveOnboardingCompleted(bool value) async {
     await _prefs.setBool(_onboardingKey, value);
+  }
+
+  Future<void> saveRestNotificationsEnabled(bool value) async {
+    await _prefs.setBool(_restNotifyKey, value);
   }
 
   Future<void> saveDefaultRestSeconds(int seconds) async {

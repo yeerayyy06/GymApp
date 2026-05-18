@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/settings_providers.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/services/settings_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -29,6 +30,46 @@ class SettingsScreen extends ConsumerWidget {
                       .read(settingsProvider.notifier)
                       .setDefaultRestSeconds(value);
                 },
+              ),
+              Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+              ),
+              SwitchListTile(
+                value: settings.restNotificationsEnabled,
+                title: const Text('Notificaciones de descanso'),
+                subtitle: Text(
+                  WebNotificationService.isSupported
+                      ? 'Aviso del navegador cuando el descanso acaba'
+                      : 'No soportado en esta plataforma',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onChanged: WebNotificationService.isSupported
+                    ? (value) async {
+                        if (value) {
+                          final granted =
+                              await WebNotificationService.requestPermission();
+                          if (!granted) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Permiso de notificaciones denegado por el navegador',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                        }
+                        await ref
+                            .read(settingsProvider.notifier)
+                            .setRestNotificationsEnabled(value);
+                      }
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 0),
               ),
               if (settings.exerciseRestSeconds.isNotEmpty) ...[
                 Divider(

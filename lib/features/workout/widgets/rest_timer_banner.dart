@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/settings_providers.dart';
+import '../../../core/services/notification_service.dart';
 import '../providers/rest_timer_provider.dart';
 
 class RestTimerBanner extends ConsumerStatefulWidget {
@@ -67,6 +68,15 @@ class _RestTimerBannerState extends ConsumerState<RestTimerBanner> {
     if (isFinished && !_alerted) {
       _alerted = true;
       HapticFeedback.mediumImpact();
+      final notify = ref.read(settingsProvider).restNotificationsEnabled;
+      if (notify) {
+        WebNotificationService.show(
+          '¡Descanso terminado!',
+          body: config.exerciseName == null
+              ? 'Toca para volver a la app'
+              : 'Toca para volver: ${config.exerciseName}',
+        );
+      }
     }
 
     final progress = config.totalSeconds <= 0

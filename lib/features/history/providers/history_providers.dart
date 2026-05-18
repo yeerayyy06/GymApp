@@ -65,6 +65,10 @@ final recentPRsProvider = StreamProvider<List<PrEvent>>((ref) {
   return ref.watch(historyRepositoryProvider).watchRecentPRs(limit: 10);
 });
 
+final nearPRsProvider = StreamProvider<List<NearPR>>((ref) {
+  return ref.watch(historyRepositoryProvider).watchExercisesNearPR();
+});
+
 /// Mapa fecha (startOfDay) → volumen total acumulado de todas las
 /// sesiones completadas ese día. Calculado a partir de
 /// sessionSummariesProvider.
