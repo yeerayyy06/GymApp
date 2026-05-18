@@ -7,6 +7,7 @@ import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
 import '../../core/utils/weight_format.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../workout/providers/workout_providers.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
@@ -37,7 +38,7 @@ class SessionDetailScreen extends ConsumerWidget {
         ],
       ),
       body: detailAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const DetailSkeleton(),
         error: (error, _) => Center(child: Text('Error: $error')),
         data: (detail) {
           if (detail == null) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../shared/widgets/muscle_pill.dart';
@@ -48,12 +49,23 @@ class RoutinesScreen extends ConsumerWidget {
               onPickTemplate: () => TemplatePickerSheet.show(context),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: routines.length,
-            itemBuilder: (context, index) {
-              return _RoutineRow(routine: routines[index]);
-            },
+          return AnimationLimiter(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+              itemCount: routines.length,
+              itemBuilder: (context, index) {
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 380),
+                  child: SlideAnimation(
+                    verticalOffset: 24,
+                    child: FadeInAnimation(
+                      child: _RoutineRow(routine: routines[index]),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

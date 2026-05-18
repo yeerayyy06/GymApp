@@ -9,6 +9,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
 import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/line_chart_card.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../exercises/data/exercise_videos.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
@@ -43,7 +44,7 @@ class ExerciseHistoryScreen extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const DetailSkeleton(),
         error: (error, _) => Center(child: Text('Error: $error')),
         data: (history) {
           if (history == null) {

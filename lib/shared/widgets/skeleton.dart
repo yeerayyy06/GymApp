@@ -87,3 +87,28 @@ class SkeletonCard extends StatelessWidget {
     );
   }
 }
+
+/// Skeleton para una pantalla tipo detalle: bloque hero arriba +
+/// 3 secciones de contenido debajo.
+class DetailSkeleton extends StatelessWidget {
+  const DetailSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        children: [
+          const SkeletonBox(height: 80, radius: 16),
+          const SizedBox(height: 14),
+          const SkeletonBox(height: 110, radius: 16),
+          const SizedBox(height: 14),
+          for (var i = 0; i < 4; i++) ...[
+            const SkeletonBox(height: 64, radius: 14),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../shared/widgets/skeleton.dart';
@@ -62,7 +63,8 @@ class HistoryScreen extends ConsumerWidget {
               ref.invalidate(recentPRsProvider);
               await Future.delayed(const Duration(milliseconds: 500));
             },
-            child: CustomScrollView(
+            child: AnimationLimiter(
+              child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
               const SliverToBoxAdapter(child: HistoryCalendar()),
@@ -121,13 +123,23 @@ class HistoryScreen extends ConsumerWidget {
                 ),
                 SliverList.builder(
                   itemCount: filtered.length,
-                  itemBuilder: (context, index) => SessionCard(
-                    summary: filtered[index],
-                  ),
+                  itemBuilder: (context, index) {
+                    return AnimationConfiguration.staggeredList(
+                      position: index,
+                      duration: const Duration(milliseconds: 380),
+                      child: SlideAnimation(
+                        verticalOffset: 24,
+                        child: FadeInAnimation(
+                          child: SessionCard(summary: filtered[index]),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
                 const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
               ],
+            ),
             ),
           );
         },

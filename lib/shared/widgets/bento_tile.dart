@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Tarjeta tipo bento: icono + label arriba, valor enorme abajo,
 /// fondo con gradiente o color sólido. Usada en headers de tabs.
-class BentoTile extends StatelessWidget {
+class BentoTile extends StatefulWidget {
   const BentoTile({
     super.key,
     required this.label,
@@ -12,7 +12,7 @@ class BentoTile extends StatelessWidget {
     this.gradient,
     this.color,
     this.onTap,
-    this.compact = false,
+    this.widget.compact = false,
   });
 
   final String label;
@@ -22,16 +22,23 @@ class BentoTile extends StatelessWidget {
   final Gradient? gradient;
   final Color? color;
   final VoidCallback? onTap;
-  final bool compact;
+  final bool widget.compact;
+
+  @override
+  State<BentoTile> createState() => _BentoTileState();
+}
+
+class _BentoTileState extends State<BentoTile> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      padding: EdgeInsets.fromLTRB(14, compact ? 10 : 12, 14, compact ? 12 : 14),
+      padding: EdgeInsets.fromLTRB(14, widget.compact ? 10 : 12, 14, widget.compact ? 12 : 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: gradient,
-        color: gradient == null ? color : null,
+        gradient: widget.gradient,
+        color: widget.gradient == null ? widget.color : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,14 +46,14 @@ class BentoTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (icon != null) ...[
-                Icon(icon,
+              if (widget.icon != null) ...[
+                Icon(widget.icon,
                     color: Colors.white.withValues(alpha: 0.9), size: 16),
                 const SizedBox(width: 6),
               ],
               Expanded(
                 child: Text(
-                  label,
+                  widget.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -58,12 +65,12 @@ class BentoTile extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: compact ? 6 : 8),
+          SizedBox(height: widget.compact ? 6 : 8),
           Text(
-            value,
+            widget.value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: (compact
+            style: (widget.compact
                     ? Theme.of(context).textTheme.headlineMedium
                     : Theme.of(context).textTheme.displaySmall)
                 ?.copyWith(
@@ -73,10 +80,10 @@ class BentoTile extends StatelessWidget {
               height: 1,
             ),
           ),
-          if (subtitle != null) ...[
+          if (widget.subtitle != null) ...[
             const SizedBox(height: 2),
             Text(
-              subtitle!,
+              widget.subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -88,14 +95,24 @@ class BentoTile extends StatelessWidget {
       ),
     );
 
-    if (onTap == null) return content;
+    final scaledContent = AnimatedScale(
+      scale: _pressed ? 0.96 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: content,
+    );
+
+    if (widget.onTap == null) return scaledContent;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
         borderRadius: BorderRadius.circular(18),
-        child: content,
+        child: scaledContent,
       ),
     );
   }

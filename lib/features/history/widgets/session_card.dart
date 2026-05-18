@@ -6,6 +6,7 @@ import '../../../core/providers/clock_provider.dart';
 import '../../../core/providers/settings_providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/weight_format.dart';
+import '../../../shared/widgets/blurred_dialog.dart';
 import '../../../shared/widgets/mini_body_map.dart';
 import '../data/history_models.dart';
 import '../providers/history_providers.dart';
@@ -16,7 +17,7 @@ class SessionCard extends ConsumerWidget {
   final SessionSummary summary;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar entrenamiento'),

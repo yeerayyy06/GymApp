@@ -51,6 +51,9 @@ dependencies:
   # Abrir enlaces externos (YouTube)
   url_launcher: ^6.3.1
 
+  # Animaciones escalonadas (staggered list entries)
+  flutter_staggered_animations: ^1.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
