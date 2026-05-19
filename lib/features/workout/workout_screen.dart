@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
@@ -7,7 +8,9 @@ import '../../core/providers/clock_provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../shared/widgets/app_gradients.dart';
 import '../../shared/widgets/bento_tile.dart';
+import '../../shared/widgets/blurred_dialog.dart';
 import '../../shared/widgets/muscle_pill.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../history/providers/history_providers.dart';
 import '../routines/data/routine_models.dart';
 import '../routines/providers/routine_providers.dart';
@@ -38,7 +41,20 @@ class WorkoutScreen extends ConsumerWidget {
         actions: const [_SessionMenu(), _EndSessionAction()],
       ),
       body: bootstrap.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            children: [
+              SkeletonCard(height: 80),
+              SizedBox(height: 14),
+              SkeletonCard(height: 130),
+              SizedBox(height: 14),
+              SkeletonCard(height: 64),
+              SizedBox(height: 10),
+              SkeletonCard(height: 64),
+            ],
+          ),
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -104,7 +120,7 @@ class _EndSessionAction extends ConsumerWidget {
     WidgetRef ref,
     WorkoutSessionRow session,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Finalizar entrenamiento'),
@@ -252,11 +268,22 @@ class _StartSessionView extends ConsumerWidget {
                   onCreate: () => context.push('/workout/routines/new'),
                 );
               }
-              return Column(
-                children: [
-                  for (final r in routines)
-                    _RoutineQuickStart(routine: r),
-                ],
+              return AnimationLimiter(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < routines.length; i++)
+                      AnimationConfiguration.staggeredList(
+                        position: i,
+                        duration: const Duration(milliseconds: 360),
+                        child: SlideAnimation(
+                          verticalOffset: 18,
+                          child: FadeInAnimation(
+                            child: _RoutineQuickStart(routine: routines[i]),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               );
             },
           ),
@@ -413,7 +440,7 @@ class _ActiveSessionView extends ConsumerWidget {
   }
 
   Future<void> _confirmCancel(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Cancelar entrenamiento'),

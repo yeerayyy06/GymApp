@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../shared/widgets/blurred_dialog.dart';
 import '../../shared/widgets/muscle_pill.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'data/routine_models.dart';
@@ -142,7 +143,7 @@ class _RoutineRow extends ConsumerWidget {
   final RoutineWithExercises routine;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar rutina'),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,24 +125,21 @@ class _WelcomePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  scheme.primary,
-                  scheme.tertiary,
-                ],
+          SizedBox(
+            width: 200,
+            height: 200,
+            child: CustomPaint(
+              painter: _ConcentricPainter(
+                primary: scheme.primary,
+                tertiary: scheme.tertiary,
               ),
-            ),
-            child: const Icon(
-              Icons.fitness_center_rounded,
-              size: 54,
-              color: Colors.white,
+              child: const Center(
+                child: Icon(
+                  Icons.fitness_center_rounded,
+                  size: 56,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -344,4 +343,57 @@ class _SelectableTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ConcentricPainter extends CustomPainter {
+  _ConcentricPainter({required this.primary, required this.tertiary});
+
+  final Color primary;
+  final Color tertiary;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxR = size.shortestSide / 2;
+
+    // Anillos concéntricos
+    for (var i = 4; i >= 1; i--) {
+      final r = maxR * (i / 4);
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..shader = RadialGradient(
+          colors: [
+            primary.withValues(alpha: 0.06 * i),
+            primary.withValues(alpha: 0.02),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: r));
+      canvas.drawCircle(center, r, paint);
+    }
+
+    // Disco interior con gradiente
+    final innerR = maxR * 0.36;
+    final innerPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [primary, tertiary],
+      ).createShader(Rect.fromCircle(center: center, radius: innerR));
+    canvas.drawCircle(center, innerR, innerPaint);
+
+    // Puntitos orbitales decorativos
+    final dotPaint = Paint()..color = tertiary.withValues(alpha: 0.55);
+    for (var i = 0; i < 6; i++) {
+      final angle = i * (math.pi * 2 / 6);
+      final r = maxR * 0.72;
+      final p = Offset(
+        center.dx + math.cos(angle) * r,
+        center.dy + math.sin(angle) * r,
+      );
+      canvas.drawCircle(p, 3, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConcentricPainter old) =>
+      old.primary != primary || old.tertiary != tertiary;
 }

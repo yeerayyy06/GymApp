@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_providers.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/settings_service.dart';
+import '../../shared/widgets/blurred_dialog.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -258,7 +259,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmGenerate(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Generar datos de prueba'),
@@ -301,7 +302,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Borrar todos los datos'),

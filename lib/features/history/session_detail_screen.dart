@@ -7,6 +7,7 @@ import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/one_rep_max.dart';
 import '../../core/utils/weight_format.dart';
+import '../../shared/widgets/blurred_dialog.dart';
 import '../../shared/widgets/skeleton.dart';
 import '../workout/providers/workout_providers.dart';
 import 'data/history_models.dart';
@@ -58,7 +59,7 @@ class SessionDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showBlurredDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar entrenamiento'),
@@ -96,7 +97,7 @@ class _RepeatBar extends ConsumerWidget {
     final active = await repo.getActiveSession();
     if (!context.mounted) return;
     if (active != null) {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showBlurredDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Hay una sesión en curso'),
@@ -197,8 +198,29 @@ class _DetailBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Hero(
+                tag: 'session-title-${session.id}',
+                flightShuttleBuilder: (_, __, ___, ____, _____) => Material(
+                  color: Colors.transparent,
+                  child: Text(
+                    formatDate(session.startedAt),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        ),
+                  ),
+                ),
+                child: Text(
+                  formatDate(session.startedAt),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 2),
               Text(
-                '${formatDate(session.startedAt)} · ${formatTime(session.startedAt)}',
+                formatTime(session.startedAt),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

@@ -82,15 +82,32 @@ class SessionCard extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  relativeDate,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
-                                      ),
+                                Hero(
+                                  tag: 'session-title-${session.id}',
+                                  flightShuttleBuilder:
+                                      (_, __, ___, ____, _____) => Material(
+                                    color: Colors.transparent,
+                                    child: Text(
+                                      relativeDate,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.2,
+                                          ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    relativeDate,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.2,
+                                        ),
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
