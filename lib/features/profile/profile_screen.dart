@@ -7,6 +7,7 @@ import '../../core/providers/clock_provider.dart';
 import '../../core/providers/settings_providers.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/weight_format.dart';
+import '../../shared/widgets/app_logo.dart';
 import '../../shared/widgets/line_chart_card.dart';
 import '../history/providers/history_providers.dart';
 import 'providers/profile_providers.dart';
@@ -33,7 +34,7 @@ class ProfileScreen extends ConsumerWidget {
     final entriesAsync = ref.watch(bodyweightEntriesProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Perfil'),
+        title: const AppBarTitle(label: 'Perfil'),
         actions: [
           IconButton(
             tooltip: 'Ajustes',

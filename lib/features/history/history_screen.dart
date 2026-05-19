@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../shared/widgets/app_logo.dart';
 import '../../shared/widgets/skeleton.dart';
 import 'providers/history_providers.dart';
 import 'widgets/history_calendar.dart';
@@ -24,13 +25,7 @@ class HistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Historial',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: const AppBarTitle(label: 'Historial'),
         actions: [
           IconButton(
             tooltip: 'Buscar',

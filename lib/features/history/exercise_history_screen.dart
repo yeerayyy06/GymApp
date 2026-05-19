@@ -10,7 +10,7 @@ import '../../core/utils/one_rep_max.dart';
 import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/line_chart_card.dart';
 import '../../shared/widgets/skeleton.dart';
-import '../exercises/data/exercise_videos.dart';
+import '../exercises/widgets/exercise_video_sheet.dart';
 import 'data/history_models.dart';
 import 'providers/history_providers.dart';
 import 'widgets/pr_badge.dart';
@@ -36,7 +36,8 @@ class ExerciseHistoryScreen extends ConsumerWidget {
                 : IconButton(
                     tooltip: 'Ver técnica',
                     icon: const Icon(Icons.play_circle_outline_rounded),
-                    onPressed: () => openExerciseVideo(h.exercise.name),
+                    onPressed: () =>
+                        ExerciseVideoSheet.show(context, h.exercise.name),
                   ),
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),

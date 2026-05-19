@@ -6,7 +6,7 @@ import '../../../core/providers/settings_providers.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/utils/one_rep_max.dart';
 import '../../../core/utils/weight_format.dart';
-import '../../exercises/data/exercise_videos.dart';
+import '../../exercises/widgets/exercise_video_sheet.dart';
 import '../../history/providers/history_providers.dart';
 import '../data/workout_repository.dart';
 import '../providers/rest_timer_provider.dart';
@@ -164,8 +164,10 @@ class LoggedExerciseCard extends ConsumerWidget {
                             padding: EdgeInsets.zero,
                             visualDensity: VisualDensity.compact,
                             constraints: const BoxConstraints(),
-                            onPressed: () =>
-                                openExerciseVideo(entry.exercise.name),
+                            onPressed: () => ExerciseVideoSheet.show(
+                              context,
+                              entry.exercise.name,
+                            ),
                           ),
                         ],
                       ),

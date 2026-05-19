@@ -7,6 +7,7 @@ import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../shared/widgets/app_gradients.dart';
+import '../../shared/widgets/app_logo.dart';
 import '../../shared/widgets/bento_tile.dart';
 import '../../shared/widgets/blurred_dialog.dart';
 import '../../shared/widgets/muscle_pill.dart';
@@ -31,13 +32,7 @@ class WorkoutScreen extends ConsumerWidget {
     final bootstrap = ref.watch(bootstrapProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Entrenar',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: const AppBarTitle(label: 'Entrenar'),
         actions: const [_SessionMenu(), _EndSessionAction()],
       ),
       body: bootstrap.when(
