@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/clock_provider.dart';
+import '../../../shared/widgets/animated_count.dart';
 import '../../../shared/widgets/app_gradients.dart';
 import '../../../shared/widgets/bento_tile.dart';
 import '../../history/providers/history_providers.dart';
@@ -28,6 +29,13 @@ class StreakCard extends ConsumerWidget {
                 data: (s) => '$s',
                 orElse: () => '…',
               ),
+              valueWidget: streakAsync.maybeWhen(
+                data: (s) => AnimatedCount(
+                  value: s,
+                  style: BentoTile.valueTextStyle(context)!,
+                ),
+                orElse: () => null,
+              ),
               subtitle: streakAsync.maybeWhen(
                 data: (s) =>
                     s == 0 ? 'Vamos a por ello' : (s == 1 ? 'día' : 'días'),
@@ -44,6 +52,13 @@ class StreakCard extends ConsumerWidget {
               value: statsAsync.maybeWhen(
                 data: (s) => '${s.sessionsThisMonth}',
                 orElse: () => '…',
+              ),
+              valueWidget: statsAsync.maybeWhen(
+                data: (s) => AnimatedCount(
+                  value: s.sessionsThisMonth,
+                  style: BentoTile.valueTextStyle(context)!,
+                ),
+                orElse: () => null,
               ),
               subtitle: statsAsync.maybeWhen(
                 data: (s) => s.sessionsThisMonth == 1 ? 'sesión' : 'sesiones',

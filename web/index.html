@@ -8,7 +8,6 @@
   <meta name="description" content="Gym Tracker — registro de entrenamientos">
   <meta name="theme-color" content="#000000">
 
-  <!-- iOS PWA support -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,52 +20,99 @@
   <title>Gym Tracker</title>
 
   <style>
+    :root {
+      --bg: #000000;
+      --primary: #6366F1;
+      --tertiary: #F472B6;
+      --text: #E9E9EE;
+      --muted: #74747D;
+    }
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #000000;
+      background-color: var(--bg);
       height: 100%;
       width: 100%;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     #splash {
       position: fixed;
       inset: 0;
       z-index: 999;
-      background-color: #000000;
+      background-color: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #b39ddb;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      transition: opacity 300ms ease-out;
+      transition: opacity 360ms ease-out;
     }
     #splash.fade-out {
       opacity: 0;
       pointer-events: none;
     }
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid rgba(179, 157, 219, 0.2);
-      border-top-color: #b39ddb;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      margin-bottom: 16px;
+    .logo-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #splash-text {
-      font-size: 14px;
-      letter-spacing: 0.3px;
+    /* Anillos concéntricos pulsantes */
+    .ring {
+      position: absolute;
+      border-radius: 999px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      animation: pulse 2.2s ease-out infinite;
+    }
+    .ring-1 { width: 96px;  height: 96px;  animation-delay: 0s;   }
+    .ring-2 { width: 132px; height: 132px; animation-delay: 0.4s; }
+    .ring-3 { width: 168px; height: 168px; animation-delay: 0.8s; }
+    @keyframes pulse {
+      0%   { transform: scale(0.92); opacity: 0.75; }
+      70%  { transform: scale(1.05); opacity: 0.05; }
+      100% { transform: scale(1.05); opacity: 0; }
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--tertiary) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: -1px;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+      z-index: 1;
+    }
+    .wordmark {
+      margin-top: 28px;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .tagline {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      font-weight: 600;
     }
     #splash-error {
-      max-width: 80%;
+      position: absolute;
+      bottom: 40px;
+      left: 20px;
+      right: 20px;
       color: #ff8a80;
       font-size: 11px;
       text-align: center;
-      margin-top: 20px;
       white-space: pre-wrap;
       line-height: 1.4;
     }
@@ -74,8 +120,14 @@
 </head>
 <body>
   <div id="splash">
-    <div class="spinner"></div>
-    <div id="splash-text">Cargando Gym Tracker…</div>
+    <div class="logo-wrap">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="logo">GT</div>
+    </div>
+    <div class="wordmark">Gym Tracker</div>
+    <div class="tagline" id="splash-text">Cargando</div>
     <div id="splash-error"></div>
   </div>
   <script>
@@ -88,7 +140,7 @@
       window.addEventListener('flutter-first-frame', function () {
         loaded = true;
         splash.classList.add('fade-out');
-        setTimeout(function () { splash.remove(); }, 350);
+        setTimeout(function () { splash.remove(); }, 380);
       });
 
       window.addEventListener('error', function (e) {
@@ -107,7 +159,7 @@
 
       setTimeout(function () {
         if (!loaded && textBox) {
-          textBox.textContent = 'Tardando más de lo normal…';
+          textBox.textContent = 'Tardando más de lo normal';
         }
       }, 10000);
 

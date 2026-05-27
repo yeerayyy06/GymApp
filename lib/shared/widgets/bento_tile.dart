@@ -7,25 +7,42 @@ class BentoTile extends StatefulWidget {
     super.key,
     required this.label,
     required this.value,
+    this.valueWidget,
     this.subtitle,
     this.icon,
     this.gradient,
     this.color,
     this.onTap,
-    this.widget.compact = false,
+    this.compact = false,
   });
 
   final String label;
   final String value;
+  final Widget? valueWidget;
   final String? subtitle;
   final IconData? icon;
   final Gradient? gradient;
   final Color? color;
   final VoidCallback? onTap;
-  final bool widget.compact;
+  final bool compact;
 
   @override
   State<BentoTile> createState() => _BentoTileState();
+
+  /// Estilo del número grande, para que valueWidget (p.ej.
+  /// AnimatedCount) pueda usar exactamente el mismo.
+  static TextStyle? valueTextStyle(BuildContext context,
+      {bool compact = false}) {
+    return (compact
+            ? Theme.of(context).textTheme.headlineMedium
+            : Theme.of(context).textTheme.displaySmall)
+        ?.copyWith(
+      color: Colors.white,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.2,
+      height: 1,
+    );
+  }
 }
 
 class _BentoTileState extends State<BentoTile> {
@@ -33,8 +50,19 @@ class _BentoTileState extends State<BentoTile> {
 
   @override
   Widget build(BuildContext context) {
+    final valueStyle = (widget.compact
+            ? Theme.of(context).textTheme.headlineMedium
+            : Theme.of(context).textTheme.displaySmall)
+        ?.copyWith(
+      color: Colors.white,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.2,
+      height: 1,
+    );
+
     final content = Container(
-      padding: EdgeInsets.fromLTRB(14, widget.compact ? 10 : 12, 14, widget.compact ? 12 : 14),
+      padding: EdgeInsets.fromLTRB(
+          14, widget.compact ? 10 : 12, 14, widget.compact ? 12 : 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: widget.gradient,
@@ -66,20 +94,13 @@ class _BentoTileState extends State<BentoTile> {
             ],
           ),
           SizedBox(height: widget.compact ? 6 : 8),
-          Text(
-            widget.value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (widget.compact
-                    ? Theme.of(context).textTheme.headlineMedium
-                    : Theme.of(context).textTheme.displaySmall)
-                ?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.2,
-              height: 1,
-            ),
-          ),
+          widget.valueWidget ??
+              Text(
+                widget.value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: valueStyle,
+              ),
           if (widget.subtitle != null) ...[
             const SizedBox(height: 2),
             Text(
