@@ -151,31 +151,85 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsCard(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Color de acento',
+                      'Tema',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        for (final accent in AccentColor.values)
-                          _AccentSwatch(
-                            accent: accent,
-                            selected: settings.accentColor == accent,
+                        Expanded(
+                          child: _AppearanceOption(
+                            label: 'Monocromo',
+                            selected:
+                                settings.appearanceMode == AppearanceMode.mono,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1C1C1E), Color(0xFFF5F5F7)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             onTap: () => ref
                                 .read(settingsProvider.notifier)
-                                .setAccentColor(accent),
+                                .setAppearanceMode(AppearanceMode.mono),
                           ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _AppearanceOption(
+                            label: 'Color',
+                            selected: settings.appearanceMode ==
+                                AppearanceMode.color,
+                            gradient: LinearGradient(
+                              colors: [
+                                settings.accentColor.seed,
+                                const Color(0xFFEC4899),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            onTap: () => ref
+                                .read(settingsProvider.notifier)
+                                .setAppearanceMode(AppearanceMode.color),
+                          ),
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
+              if (settings.appearanceMode == AppearanceMode.color)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Color de acento',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          for (final accent in AccentColor.values)
+                            _AccentSwatch(
+                              accent: accent,
+                              selected: settings.accentColor == accent,
+                              onTap: () => ref
+                                  .read(settingsProvider.notifier)
+                                  .setAccentColor(accent),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              else
+                const SizedBox(height: 12),
             ],
           ),
           const SizedBox(height: 24),
@@ -656,6 +710,71 @@ class _AccentSwatch extends StatelessWidget {
         child: selected
             ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
             : null,
+      ),
+    );
+  }
+}
+
+class _AppearanceOption extends StatelessWidget {
+  const _AppearanceOption({
+    required this.label,
+    required this.selected,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Gradient gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: scheme.surfaceContainerHighest,
+          border: Border.all(
+            color: selected ? scheme.primary : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: gradient,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (selected)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Icon(Icons.check_circle_rounded,
+                        size: 15, color: scheme.primary),
+                  ),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected ? scheme.primary : null,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

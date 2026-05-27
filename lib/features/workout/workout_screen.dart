@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
+import '../../core/providers/settings_providers.dart';
+import '../../core/services/settings_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../shared/widgets/app_gradients.dart';
 import '../../shared/widgets/app_logo.dart';
@@ -174,6 +176,8 @@ class _StartSessionView extends ConsumerWidget {
     final statsAsync = ref.watch(historyStatsProvider);
     final sumAsync = ref.watch(sessionSummariesProvider);
     final now = ref.watch(clockProvider)();
+    final mono = ref.watch(settingsProvider).appearanceMode ==
+        AppearanceMode.mono;
     final lastSession = sumAsync.maybeWhen(
       data: (sums) => sums.isEmpty ? null : sums.first.session.startedAt,
       orElse: () => null,
@@ -196,7 +200,8 @@ class _StartSessionView extends ConsumerWidget {
             children: [
               Expanded(
                 child: BentoTile(
-                  gradient: AppGradients.ocean,
+                  gradient:
+                      AppGradients.resolve(AppGradients.ocean, mono: mono),
                   icon: Icons.calendar_today_rounded,
                   label: 'Este mes',
                   value: statsAsync.maybeWhen(
@@ -213,7 +218,8 @@ class _StartSessionView extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: BentoTile(
-                  gradient: AppGradients.sunset,
+                  gradient:
+                      AppGradients.resolve(AppGradients.sunset, mono: mono),
                   icon: Icons.history_rounded,
                   label: 'Última',
                   value: _lastSessionLabel(lastSession, now),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/clock_provider.dart';
+import '../../../core/providers/settings_providers.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../shared/widgets/animated_count.dart';
 import '../../../shared/widgets/app_gradients.dart';
 import '../../../shared/widgets/bento_tile.dart';
@@ -15,6 +17,8 @@ class StreakCard extends ConsumerWidget {
     final streakAsync = ref.watch(currentStreakProvider);
     final statsAsync = ref.watch(historyStatsProvider);
     final now = ref.watch(clockProvider)();
+    final mono = ref.watch(settingsProvider).appearanceMode ==
+        AppearanceMode.mono;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -22,7 +26,7 @@ class StreakCard extends ConsumerWidget {
         children: [
           Expanded(
             child: BentoTile(
-              gradient: AppGradients.fire,
+              gradient: AppGradients.resolve(AppGradients.fire, mono: mono),
               icon: Icons.local_fire_department_rounded,
               label: 'Racha',
               value: streakAsync.maybeWhen(
@@ -46,7 +50,7 @@ class StreakCard extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: BentoTile(
-              gradient: AppGradients.ocean,
+              gradient: AppGradients.resolve(AppGradients.ocean, mono: mono),
               icon: Icons.calendar_today_rounded,
               label: _monthLabel(now),
               value: statsAsync.maybeWhen(

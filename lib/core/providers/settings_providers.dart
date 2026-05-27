@@ -61,6 +61,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(accentColor: accent);
     await _service.saveAccentColor(accent);
   }
+
+  Future<void> setAppearanceMode(AppearanceMode mode) async {
+    state = state.copyWith(appearanceMode: mode);
+    await _service.saveAppearanceMode(mode);
+  }
 }
 
 final settingsProvider =

@@ -39,4 +39,27 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // ── Variantes monocromo (identidad B/N) ──
+  static const monoLight = LinearGradient(
+    colors: [Color(0xFF3A3A3E), Color(0xFF6E6E76)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const monoDark = LinearGradient(
+    colors: [Color(0xFF2A2A2E), Color(0xFF48484C)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Devuelve el gradiente [colorVariant] o su equivalente monocromo
+  /// según [mono]. Para cohesión de la identidad B/N.
+  static Gradient resolve(Gradient colorVariant, {required bool mono}) {
+    if (!mono) return colorVariant;
+    // Alterna entre dos grises para dar contraste entre tiles vecinos.
+    return colorVariant == ocean || colorVariant == violet || colorVariant == sky
+        ? monoDark
+        : monoLight;
+  }
 }

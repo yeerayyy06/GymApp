@@ -3,6 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum WeightUnit { kg, lbs }
 
+enum AppearanceMode { mono, color }
+
+extension AppearanceModeX on AppearanceMode {
+  String get label =>
+      this == AppearanceMode.mono ? 'Monocromo' : 'Color';
+}
+
 enum AccentColor { indigo, violet, green, orange, blue, pink }
 
 extension AccentColorX on AccentColor {
@@ -50,6 +57,7 @@ class SettingsState {
     this.hasCompletedOnboarding = false,
     this.restNotificationsEnabled = false,
     this.accentColor = AccentColor.indigo,
+    this.appearanceMode = AppearanceMode.mono,
   });
 
   final int defaultRestSeconds;
@@ -58,6 +66,7 @@ class SettingsState {
   final bool hasCompletedOnboarding;
   final bool restNotificationsEnabled;
   final AccentColor accentColor;
+  final AppearanceMode appearanceMode;
 
   int restSecondsFor(String? exerciseId) {
     if (exerciseId == null) return defaultRestSeconds;
@@ -74,6 +83,7 @@ class SettingsState {
     bool? hasCompletedOnboarding,
     bool? restNotificationsEnabled,
     AccentColor? accentColor,
+    AppearanceMode? appearanceMode,
   }) {
     return SettingsState(
       defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
@@ -84,6 +94,7 @@ class SettingsState {
       restNotificationsEnabled:
           restNotificationsEnabled ?? this.restNotificationsEnabled,
       accentColor: accentColor ?? this.accentColor,
+      appearanceMode: appearanceMode ?? this.appearanceMode,
     );
   }
 }
@@ -99,6 +110,7 @@ class SettingsService {
   static const _onboardingKey = 'settings.hasCompletedOnboarding';
   static const _restNotifyKey = 'settings.restNotificationsEnabled';
   static const _accentKey = 'settings.accentColor';
+  static const _appearanceKey = 'settings.appearanceMode';
 
   SettingsState load() {
     final defaultRest = _prefs.getInt(_defaultRestKey) ?? 90;
@@ -122,6 +134,12 @@ class SettingsService {
       (a) => a.name == accentName,
       orElse: () => AccentColor.indigo,
     );
+    final appearanceName =
+        _prefs.getString(_appearanceKey) ?? AppearanceMode.mono.name;
+    final appearance = AppearanceMode.values.firstWhere(
+      (a) => a.name == appearanceName,
+      orElse: () => AppearanceMode.mono,
+    );
     return SettingsState(
       defaultRestSeconds: defaultRest,
       exerciseRestSeconds: perExercise,
@@ -129,11 +147,16 @@ class SettingsService {
       hasCompletedOnboarding: _prefs.getBool(_onboardingKey) ?? false,
       restNotificationsEnabled: _prefs.getBool(_restNotifyKey) ?? false,
       accentColor: accent,
+      appearanceMode: appearance,
     );
   }
 
   Future<void> saveAccentColor(AccentColor accent) async {
     await _prefs.setString(_accentKey, accent.name);
+  }
+
+  Future<void> saveAppearanceMode(AppearanceMode mode) async {
+    await _prefs.setString(_appearanceKey, mode.name);
   }
 
   Future<void> saveOnboardingCompleted(bool value) async {

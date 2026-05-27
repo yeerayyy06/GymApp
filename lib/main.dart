@@ -76,12 +76,18 @@ class GymTrackerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+    final appearance = ref.watch(
+      settingsProvider.select((s) => s.appearanceMode),
+    );
     final accent = ref.watch(
       settingsProvider.select((s) => s.accentColor),
     );
+    final theme = appearance == AppearanceMode.mono
+        ? AppTheme.monoTheme
+        : AppTheme.darkThemeFor(accent.seed);
     return MaterialApp.router(
       title: 'Gym Tracker',
-      theme: AppTheme.darkThemeFor(accent.seed),
+      theme: theme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

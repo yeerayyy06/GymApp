@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/settings_providers.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../core/utils/weight_format.dart';
 import '../../../shared/widgets/app_gradients.dart';
 import '../../../shared/widgets/bento_tile.dart';
@@ -14,6 +15,8 @@ class StatsSummaryCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(historyStatsProvider);
     final unit = ref.watch(settingsProvider).weightUnit;
+    final mono = ref.watch(settingsProvider).appearanceMode ==
+        AppearanceMode.mono;
     final scheme = Theme.of(context).colorScheme;
 
     return statsAsync.when(
@@ -33,7 +36,8 @@ class StatsSummaryCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: BentoTile(
-                    gradient: AppGradients.ocean,
+                    gradient:
+                        AppGradients.resolve(AppGradients.ocean, mono: mono),
                     icon: Icons.date_range_rounded,
                     label: 'Esta semana',
                     value: '${stats.sessionsThisWeek}',
@@ -46,7 +50,8 @@ class StatsSummaryCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: BentoTile(
-                    gradient: AppGradients.violet,
+                    gradient:
+                        AppGradients.resolve(AppGradients.violet, mono: mono),
                     icon: Icons.calendar_today_rounded,
                     label: 'Este mes',
                     value: '${stats.sessionsThisMonth}',

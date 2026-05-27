@@ -12,6 +12,32 @@ class AppTheme {
 
   static ThemeData get darkTheme => darkThemeFor(_seedColor);
 
+  /// Tema monocromo (identidad B/N): acento blanco sobre negro puro.
+  static ThemeData get monoTheme {
+    final colorScheme = const ColorScheme.dark(
+      brightness: Brightness.dark,
+      primary: Color(0xFFF5F5F7),
+      onPrimary: Color(0xFF000000),
+      secondary: Color(0xFFC7C7CC),
+      onSecondary: Color(0xFF000000),
+      tertiary: Color(0xFFE5E5EA),
+      onTertiary: Color(0xFF000000),
+      error: Color(0xFFFF6B6B),
+    ).copyWith(
+      surface: _surface,
+      onSurface: const Color(0xFFF2F2F5),
+      onSurfaceVariant: const Color(0xFF9A9AA2),
+      surfaceContainerLowest: const Color(0xFF09090B),
+      surfaceContainerLow: const Color(0xFF111114),
+      surfaceContainer: _surfaceContainer,
+      surfaceContainerHigh: _surfaceContainerHigh,
+      surfaceContainerHighest: _surfaceContainerHighest,
+      outline: _separator,
+      outlineVariant: _separator,
+    );
+    return _themeFromScheme(colorScheme);
+  }
+
   static ThemeData darkThemeFor(Color seedColor) {
     final base = ColorScheme.fromSeed(
       seedColor: seedColor,
@@ -28,7 +54,10 @@ class AppTheme {
       outline: _separator,
       outlineVariant: _separator,
     );
+    return _themeFromScheme(colorScheme);
+  }
 
+  static ThemeData _themeFromScheme(ColorScheme colorScheme) {
     final textTheme = _buildTextTheme(colorScheme);
 
     return ThemeData(
