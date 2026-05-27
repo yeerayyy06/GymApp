@@ -44,6 +44,8 @@ const _items = <_NavItemData>[
     'Entrenar',
     useDumbbell: true,
   ),
+  _NavItemData(
+      Icons.favorite_outline_rounded, Icons.favorite_rounded, 'Salud'),
   _NavItemData(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil'),
 ];
 

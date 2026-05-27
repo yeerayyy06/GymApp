@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/health/health_screen.dart';
 import '../../features/history/exercise_history_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/history/session_detail_screen.dart';
@@ -17,6 +18,7 @@ abstract final class AppRoutes {
   static const onboarding = '/onboarding';
   static const history = '/history';
   static const workout = '/workout';
+  static const health = '/health';
   static const profile = '/profile';
 
   static String historySession(String id) => '$history/session/$id';
@@ -98,6 +100,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     ],
                   ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.health,
+                builder: (context, state) => const HealthScreen(),
               ),
             ],
           ),
