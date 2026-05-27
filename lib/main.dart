@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_theme.dart';
 import 'core/providers/settings_providers.dart';
 import 'core/router/app_router.dart';
+import 'core/services/settings_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -75,9 +76,12 @@ class GymTrackerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+    final accent = ref.watch(
+      settingsProvider.select((s) => s.accentColor),
+    );
     return MaterialApp.router(
       title: 'Gym Tracker',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.darkThemeFor(accent.seed),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

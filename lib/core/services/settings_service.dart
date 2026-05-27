@@ -1,7 +1,45 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum WeightUnit { kg, lbs }
+
+enum AccentColor { indigo, violet, green, orange, blue, pink }
+
+extension AccentColorX on AccentColor {
+  Color get seed {
+    switch (this) {
+      case AccentColor.indigo:
+        return const Color(0xFF6366F1);
+      case AccentColor.violet:
+        return const Color(0xFF8B5CF6);
+      case AccentColor.green:
+        return const Color(0xFF10B981);
+      case AccentColor.orange:
+        return const Color(0xFFF97316);
+      case AccentColor.blue:
+        return const Color(0xFF3B82F6);
+      case AccentColor.pink:
+        return const Color(0xFFEC4899);
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case AccentColor.indigo:
+        return 'Índigo';
+      case AccentColor.violet:
+        return 'Violeta';
+      case AccentColor.green:
+        return 'Verde';
+      case AccentColor.orange:
+        return 'Naranja';
+      case AccentColor.blue:
+        return 'Azul';
+      case AccentColor.pink:
+        return 'Rosa';
+    }
+  }
+}
 
 @immutable
 class SettingsState {
@@ -11,6 +49,7 @@ class SettingsState {
     this.weightUnit = WeightUnit.kg,
     this.hasCompletedOnboarding = false,
     this.restNotificationsEnabled = false,
+    this.accentColor = AccentColor.indigo,
   });
 
   final int defaultRestSeconds;
@@ -18,6 +57,7 @@ class SettingsState {
   final WeightUnit weightUnit;
   final bool hasCompletedOnboarding;
   final bool restNotificationsEnabled;
+  final AccentColor accentColor;
 
   int restSecondsFor(String? exerciseId) {
     if (exerciseId == null) return defaultRestSeconds;
@@ -33,6 +73,7 @@ class SettingsState {
     WeightUnit? weightUnit,
     bool? hasCompletedOnboarding,
     bool? restNotificationsEnabled,
+    AccentColor? accentColor,
   }) {
     return SettingsState(
       defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
@@ -42,6 +83,7 @@ class SettingsState {
           hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       restNotificationsEnabled:
           restNotificationsEnabled ?? this.restNotificationsEnabled,
+      accentColor: accentColor ?? this.accentColor,
     );
   }
 }
@@ -56,6 +98,7 @@ class SettingsService {
   static const _weightUnitKey = 'settings.weightUnit';
   static const _onboardingKey = 'settings.hasCompletedOnboarding';
   static const _restNotifyKey = 'settings.restNotificationsEnabled';
+  static const _accentKey = 'settings.accentColor';
 
   SettingsState load() {
     final defaultRest = _prefs.getInt(_defaultRestKey) ?? 90;
@@ -73,13 +116,24 @@ class SettingsService {
         if (value != null) perExercise[exerciseId] = value;
       }
     }
+    final accentName =
+        _prefs.getString(_accentKey) ?? AccentColor.indigo.name;
+    final accent = AccentColor.values.firstWhere(
+      (a) => a.name == accentName,
+      orElse: () => AccentColor.indigo,
+    );
     return SettingsState(
       defaultRestSeconds: defaultRest,
       exerciseRestSeconds: perExercise,
       weightUnit: unit,
       hasCompletedOnboarding: _prefs.getBool(_onboardingKey) ?? false,
       restNotificationsEnabled: _prefs.getBool(_restNotifyKey) ?? false,
+      accentColor: accent,
     );
+  }
+
+  Future<void> saveAccentColor(AccentColor accent) async {
+    await _prefs.setString(_accentKey, accent.name);
   }
 
   Future<void> saveOnboardingCompleted(bool value) async {

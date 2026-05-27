@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/muscle_color.dart';
 import '../../../core/domain/muscle_group.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../shared/widgets/glass_card.dart';
 import '../../history/providers/history_providers.dart';
 
 class MuscleDonutCard extends ConsumerStatefulWidget {
@@ -23,13 +24,9 @@ class _MuscleDonutCardState extends ConsumerState<MuscleDonutCard> {
     final days = ref.watch(muscleVolumeWindowProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+    return GlassCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: scheme.surfaceContainerHigh,
-      ),
+      tint: scheme.tertiary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

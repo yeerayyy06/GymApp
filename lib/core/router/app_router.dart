@@ -42,9 +42,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (context, state, navigationShell) =>
             MainLayout(navigationShell: navigationShell),
+        navigatorContainerBuilder: (context, navigationShell, children) {
+          return _AnimatedBranchContainer(
+            currentIndex: navigationShell.currentIndex,
+            children: children,
+          );
+        },
         branches: [
           StatefulShellBranch(
             routes: [
@@ -114,3 +120,47 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Contenedor de ramas con crossfade + scale al cambiar de pestaña.
+/// Mantiene el estado de cada rama vivo (Offstage + IgnorePointer
+/// para las inactivas) como hace StatefulShellRoute.indexedStack,
+/// pero añade una transición suave.
+class _AnimatedBranchContainer extends StatelessWidget {
+  const _AnimatedBranchContainer({
+    required this.currentIndex,
+    required this.children,
+  });
+
+  final int currentIndex;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        for (var i = 0; i < children.length; i++)
+          _branch(active: i == currentIndex, child: children[i]),
+      ],
+    );
+  }
+
+  Widget _branch({required bool active, required Widget child}) {
+    return AnimatedScale(
+      scale: active ? 1.0 : 0.98,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      child: AnimatedOpacity(
+        opacity: active ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        child: IgnorePointer(
+          ignoring: !active,
+          child: TickerMode(
+            enabled: active,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}

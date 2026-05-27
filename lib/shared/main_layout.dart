@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'widgets/dumbbell_icon.dart';
+
 class MainLayout extends StatelessWidget {
   const MainLayout({super.key, required this.navigationShell});
 
@@ -26,16 +28,22 @@ class MainLayout extends StatelessWidget {
 }
 
 class _NavItemData {
-  const _NavItemData(this.icon, this.activeIcon, this.label);
+  const _NavItemData(this.icon, this.activeIcon, this.label,
+      {this.useDumbbell = false});
   final IconData icon;
   final IconData activeIcon;
   final String label;
+  final bool useDumbbell;
 }
 
 const _items = <_NavItemData>[
   _NavItemData(Icons.history_outlined, Icons.history_rounded, 'Historial'),
   _NavItemData(
-      Icons.fitness_center_outlined, Icons.fitness_center_rounded, 'Entrenar'),
+    Icons.fitness_center_outlined,
+    Icons.fitness_center_rounded,
+    'Entrenar',
+    useDumbbell: true,
+  ),
   _NavItemData(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil'),
 ];
 
@@ -116,11 +124,17 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              selected ? data.activeIcon : data.icon,
-              size: 22,
-              color: selected ? scheme.primary : scheme.onSurfaceVariant,
-            ),
+            if (data.useDumbbell)
+              DumbbellIcon(
+                size: 22,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+              )
+            else
+              Icon(
+                selected ? data.activeIcon : data.icon,
+                size: 22,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+              ),
             const SizedBox(height: 3),
             Text(
               data.label,

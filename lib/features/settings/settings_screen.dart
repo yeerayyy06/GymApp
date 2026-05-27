@@ -147,6 +147,38 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
+          _SectionHeader(title: 'Apariencia', icon: Icons.palette_outlined),
+          _SettingsCard(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Color de acento',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        for (final accent in AccentColor.values)
+                          _AccentSwatch(
+                            accent: accent,
+                            selected: settings.accentColor == accent,
+                            onTap: () => ref
+                                .read(settingsProvider.notifier)
+                                .setAccentColor(accent),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           _SectionHeader(title: 'Datos', icon: Icons.dataset_outlined),
           _SettingsCard(
             children: [
@@ -579,6 +611,51 @@ class _ActionTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AccentSwatch extends StatelessWidget {
+  const _AccentSwatch({
+    required this.accent,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AccentColor accent;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: accent.seed,
+          border: Border.all(
+            color: selected ? scheme.onSurface : Colors.transparent,
+            width: 2.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: accent.seed.withValues(alpha: 0.5),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: selected
+            ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+            : null,
       ),
     );
   }

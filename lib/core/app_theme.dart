@@ -10,9 +10,11 @@ class AppTheme {
   static const _surfaceContainerHighest = Color(0xFF26262E);
   static const _separator = Color(0xFF2A2A33);
 
-  static ThemeData get darkTheme {
+  static ThemeData get darkTheme => darkThemeFor(_seedColor);
+
+  static ThemeData darkThemeFor(Color seedColor) {
     final base = ColorScheme.fromSeed(
-      seedColor: _seedColor,
+      seedColor: seedColor,
       brightness: Brightness.dark,
     );
     final colorScheme = base.copyWith(

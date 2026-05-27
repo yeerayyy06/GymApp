@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/muscle_color.dart';
 import '../../../core/domain/muscle_group.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../shared/widgets/glass_card.dart';
 import '../../history/providers/history_providers.dart';
 
 /// Tarjeta de volumen por grupo muscular con silueta anatómica (vista
@@ -20,15 +21,9 @@ class MuscleVolumeCard extends ConsumerWidget {
     final days = ref.watch(muscleVolumeWindowProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: scheme.surfaceContainerHigh,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-        child: Column(
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -63,7 +58,6 @@ class MuscleVolumeCard extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -129,18 +123,26 @@ class _Body extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: CustomPaint(
-                  painter: _BodyPainter(
-                    volumes: volumes,
-                    maxVolume: maxVolume,
-                    bodyColor: scheme.surfaceContainerHighest,
-                    bodyShadow: scheme.surfaceContainerLow,
-                    accent: scheme.primary,
-                    secondary: scheme.tertiary,
-                    labelColor: scheme.onSurfaceVariant
-                        .withValues(alpha: 0.55),
-                  ),
-                  child: const SizedBox.expand(),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 1100),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, progress, _) {
+                    return CustomPaint(
+                      painter: _BodyPainter(
+                        volumes: volumes,
+                        maxVolume: maxVolume,
+                        bodyColor: scheme.surfaceContainerHighest,
+                        bodyShadow: scheme.surfaceContainerLow,
+                        accent: scheme.primary,
+                        secondary: scheme.tertiary,
+                        labelColor: scheme.onSurfaceVariant
+                            .withValues(alpha: 0.55),
+                        progress: progress,
+                      ),
+                      child: const SizedBox.expand(),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -295,6 +297,7 @@ class _BodyPainter extends CustomPainter {
     required this.accent,
     required this.secondary,
     required this.labelColor,
+    this.progress = 1.0,
   });
 
   final Map<MuscleGroup, double> volumes;
@@ -304,14 +307,23 @@ class _BodyPainter extends CustomPainter {
   final Color accent;
   final Color secondary;
   final Color labelColor;
+  final double progress;
 
   Color _colorFor(MuscleGroup m) {
     final v = volumes[m] ?? 0;
     if (v == 0 || maxVolume == 0) return bodyShadow;
     final ratio = v / maxVolume;
-    if (ratio > 0.85) return secondary;
-    if (ratio > 0.5) return accent;
-    return accent.withValues(alpha: 0.55);
+    final target = ratio > 0.85
+        ? secondary
+        : ratio > 0.5
+            ? accent
+            : accent.withValues(alpha: 0.55);
+    // Los músculos se "encienden" desde el color base hasta su color
+    // objetivo según el progreso de la animación. Los de más volumen
+    // arrancan antes (umbral menor) para un efecto escalonado.
+    final start = 1.0 - ratio; // más volumen → empieza antes
+    final local = ((progress - start) / (1 - start)).clamp(0.0, 1.0);
+    return Color.lerp(bodyShadow, target, local) ?? target;
   }
 
   @override
@@ -824,6 +836,7 @@ class _BodyPainter extends CustomPainter {
         old.maxVolume != maxVolume ||
         old.accent != accent ||
         old.secondary != secondary ||
-        old.bodyColor != bodyColor;
+        old.bodyColor != bodyColor ||
+        old.progress != progress;
   }
 }

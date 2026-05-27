@@ -56,6 +56,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(restNotificationsEnabled: value);
     await _service.saveRestNotificationsEnabled(value);
   }
+
+  Future<void> setAccentColor(AccentColor accent) async {
+    state = state.copyWith(accentColor: accent);
+    await _service.saveAccentColor(accent);
+  }
 }
 
 final settingsProvider =
