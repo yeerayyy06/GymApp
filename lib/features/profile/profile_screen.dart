@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
 import '../../core/providers/clock_provider.dart';
 import '../../core/providers/settings_providers.dart';
+import '../../core/services/settings_service.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/weight_format.dart';
 import '../../shared/widgets/app_logo.dart';

@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
@@ -9,7 +10,7 @@ class WebNotificationService {
   static bool get isSupported {
     if (!kIsWeb) return false;
     try {
-      return web.window.has('Notification');
+      return globalContext.has('Notification');
     } catch (_) {
       return false;
     }
